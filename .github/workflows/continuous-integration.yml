@@ -22,10 +22,10 @@ jobs:
     secrets: inherit
     with:
       php-versions: '["8.4", "8.5"]'
-      # Integration suite (Mailpit-backed docker-compose setup) lands in a later
-      # step; keep false until then — an empty suite fails with "No tests
-      # executed!".
-      run-integration: false
+      # Integration tests send real SMTP traffic against an in-process fake
+      # SMTP server (bin/fake-smtp-server.php) on 127.0.0.1 — no external
+      # services or containers needed.
+      run-integration: true
       enable-codecov: true
       enable-infection: true
       # Canonical leg for coverage + mutation testing (highest supported PHP).
