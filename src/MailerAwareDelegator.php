@@ -21,7 +21,7 @@ final class MailerAwareDelegator
     public function __invoke(ContainerInterface $container, string $serviceName, callable $callback): mixed
     {
         $service = $callback();
-        if (! $service instanceof MailerAwareInterface) {
+        if (!$service instanceof MailerAwareInterface) {
             return $service;
         }
 

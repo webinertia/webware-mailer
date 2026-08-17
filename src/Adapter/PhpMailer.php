@@ -145,7 +145,7 @@ final class PhpMailer implements AdapterInterface
         $this->mailer->clearAttachments();
         $this->mailer->clearCustomHeaders();
         $this->mailer->Subject = '';
-        $this->mailer->Body    = '';
+        $this->mailer->Body = '';
         $this->mailer->AltBody = '';
 
         return $this;

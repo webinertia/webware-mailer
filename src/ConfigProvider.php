@@ -26,7 +26,7 @@ final readonly class ConfigProvider
     {
         return [
             'enableExceptions' => true,
-            'useSmtp'          => false,
+            'useSmtp' => false,
         ];
     }
 
@@ -42,15 +42,15 @@ final readonly class ConfigProvider
     public function getDependencies(): array
     {
         return [
-            'aliases'   => [
+            'aliases' => [
                 AdapterInterface::class => Adapter\PhpMailer::class, // required mapping
                 MailerInterface::class => Mailer::class,
             ],
             'factories' => [
-                Adapter\PhpMailer::class                  => Container\PhpMailerFactory::class,
+                Adapter\PhpMailer::class => Container\PhpMailerFactory::class,
                 CommandBus\SendEmailCommandHandler::class => CommandBus\SendEmailCommandHandlerFactory::class,
-                Mailer::class                             => Container\MailerFactory::class,
-                Middleware\MailerMiddleware::class        => Middleware\MailerMiddlewareFactory::class,
+                Mailer::class => Container\MailerFactory::class,
+                Middleware\MailerMiddleware::class => Middleware\MailerMiddlewareFactory::class,
             ],
         ];
     }
@@ -75,13 +75,13 @@ final readonly class ConfigProvider
     public function __invoke(): array
     {
         return [
-            'dependencies'             => $this->getDependencies(),
-            'templates'                => $this->getTemplates(),
+            'dependencies' => $this->getDependencies(),
+            'templates' => $this->getTemplates(),
             CommandBusInterface::class => [
                 BusProvider::COMMAND_MAP_KEY => $this->getCommandMap(),
             ],
-            AdapterInterface::class    => $this->getAdapterConfig(),
-            MessageInterface::class    => $this->getMessageConfig(),
+            AdapterInterface::class => $this->getAdapterConfig(),
+            MessageInterface::class => $this->getMessageConfig(),
         ];
     }
 }
