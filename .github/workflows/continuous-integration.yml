@@ -22,6 +22,9 @@ jobs:
     secrets: inherit
     with:
       php-versions: '["8.4", "8.5"]'
+      # Integration tests send real SMTP traffic against an in-process fake
+      # SMTP server (bin/fake-smtp-server.php) on 127.0.0.1 — no external
+      # services or containers needed.
       run-integration: true
       enable-codecov: true
       enable-infection: true
