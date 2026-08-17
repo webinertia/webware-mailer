@@ -14,10 +14,10 @@ declare(strict_types=1);
 
 namespace Webware\Mailer\Event;
 
-use Webware\CommandBus\Event\Event;
+use Webware\MessageBus\Event\Event;
 
-// todo: determine whether this event is still needed and flesh out accordingly
-class MessageEvent extends Event
+// TODO(@tyrsson): determine whether this event is still needed and flesh out accordingly
+final class MessageEvent extends Event
 {
-    final public const EVENT_EMAIL_MESSAGE = 'emailMessage';
+    final public const string EVENT_EMAIL_MESSAGE = 'emailMessage';
 }

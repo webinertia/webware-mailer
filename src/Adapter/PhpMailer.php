@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Webware\Mailer\Adapter;
 
 use Override;
+use PHPMailer\PHPMailer\Exception as MailerException;
 use PHPMailer\PHPMailer\PHPMailer as BaseMailer;
 
 final class PhpMailer implements AdapterInterface
@@ -23,6 +24,9 @@ final class PhpMailer implements AdapterInterface
         private BaseMailer $mailer,
     ) {}
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function addHeader(string $name, string $value): self
     {
@@ -39,6 +43,9 @@ final class PhpMailer implements AdapterInterface
         return $this;
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function attach(string $path, string $name = '', string $mimeType = ''): self
     {
@@ -47,6 +54,9 @@ final class PhpMailer implements AdapterInterface
         return $this;
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function attachFromString(string $content, string $name, string $mimeType = ''): self
     {
@@ -55,6 +65,9 @@ final class PhpMailer implements AdapterInterface
         return $this;
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function bcc(string $email, string $name = ''): self
     {
@@ -71,6 +84,9 @@ final class PhpMailer implements AdapterInterface
         return $this;
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function cc(string $email, string $name = ''): self
     {
@@ -95,6 +111,9 @@ final class PhpMailer implements AdapterInterface
         return $this;
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function from(string $email, string $name = ''): self
     {
@@ -127,6 +146,9 @@ final class PhpMailer implements AdapterInterface
         return $this;
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function replyTo(string $email, string $name = ''): self
     {
@@ -151,6 +173,9 @@ final class PhpMailer implements AdapterInterface
         return $this;
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function send(): bool
     {
@@ -165,6 +190,9 @@ final class PhpMailer implements AdapterInterface
         return $this;
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function to(string $email, string $name = ''): self
     {

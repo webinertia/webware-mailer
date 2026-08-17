@@ -14,22 +14,40 @@ declare(strict_types=1);
 
 namespace Webware\Mailer\Middleware;
 
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
+use RuntimeException;
 use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\ConfigProvider;
 use Webware\Mailer\MailerInterface;
 
-class MailerMiddlewareFactory
+use function is_array;
+
+final class MailerMiddlewareFactory
 {
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws RuntimeException
+     */
     public function __invoke(ContainerInterface $container): MailerMiddleware
     {
         /** @var array<string, mixed> $appConfig */
         $appConfig = $container->get('config');
 
-        /** @var array<string, mixed> $mailSettings */
-        $mailSettings = $appConfig[ConfigProvider::class][AdapterInterface::class];
+        if (!is_array($appConfig[ConfigProvider::class] ?? null)) {
+            throw new RuntimeException('Service: ' . ConfigProvider::class . ' configuration must be an array.');
+        }
 
-        /** @var MailerInterface $mailer */
+        $mailerConfig = $appConfig[ConfigProvider::class];
+
+        if (!is_array($mailerConfig[AdapterInterface::class] ?? null)) {
+            throw new RuntimeException('Service: ' . AdapterInterface::class . ' configuration must be an array.');
+        }
+
+        $mailSettings = $mailerConfig[AdapterInterface::class];
+
         $mailer = $container->get(MailerInterface::class);
 
         return new MailerMiddleware($mailer, $mailSettings);

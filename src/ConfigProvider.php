@@ -14,10 +14,10 @@ declare(strict_types=1);
 
 namespace Webware\Mailer;
 
-use Webware\CommandBus\CommandBusInterface;
-use Webware\CommandBus\ConfigProvider as BusProvider;
 use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\Adapter\MessageInterface;
+use Webware\MessageBus\ConfigProvider as BusProvider;
+use Webware\MessageBus\MessageBusInterface;
 
 final readonly class ConfigProvider
 {
@@ -77,7 +77,7 @@ final readonly class ConfigProvider
         return [
             'dependencies' => $this->getDependencies(),
             'templates' => $this->getTemplates(),
-            CommandBusInterface::class => [
+            MessageBusInterface::class => [
                 BusProvider::COMMAND_MAP_KEY => $this->getCommandMap(),
             ],
             AdapterInterface::class => $this->getAdapterConfig(),

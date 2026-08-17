@@ -15,14 +15,13 @@ declare(strict_types=1);
 namespace Webware\Mailer\CommandBus;
 
 use Exception;
-use Override;
 use RuntimeException;
-use Webware\CommandBus\Command\CommandResult;
-use Webware\CommandBus\Command\CommandResultInterface;
-use Webware\CommandBus\Command\CommandStatus;
-use Webware\CommandBus\CommandHandlerInterface;
-use Webware\CommandBus\CommandInterface;
 use Webware\Mailer\MailerInterface;
+use Webware\MessageBus\Command\CommandInterface;
+use Webware\MessageBus\Command\CommandResult;
+use Webware\MessageBus\Command\CommandResultInterface;
+use Webware\MessageBus\CommandHandlerInterface;
+use Webware\MessageBus\MessageStatus;
 
 final readonly class SendEmailCommandHandler implements CommandHandlerInterface
 {
@@ -33,12 +32,11 @@ final readonly class SendEmailCommandHandler implements CommandHandlerInterface
     /**
      * @param CommandInterface&SendEmailCommand $command
      */
-    #[Override]
     public function handle(CommandInterface $command): CommandResultInterface
     {
         try {
             $adapter = $this->mailer->getAdapter();
-            if ($adapter === null) {
+            if (null === $adapter) {
                 throw new RuntimeException('No adapter configured on Mailer instance.');
             }
             $adapter->to($command->getTo())
@@ -49,14 +47,14 @@ final readonly class SendEmailCommandHandler implements CommandHandlerInterface
         } catch (Exception $e) { // track down the specific exception thrown by the mailer adapter and catch that instead of Exception
             return new CommandResult(
                 $command,
-                CommandStatus::Failure,
+                MessageStatus::Failure,
                 $e->getMessage(),
             );
         }
 
         return new CommandResult(
             $command,
-            CommandStatus::Success,
+            MessageStatus::Success,
             'Email sent successfully',
         );
     }

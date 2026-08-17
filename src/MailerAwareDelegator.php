@@ -14,19 +14,42 @@ declare(strict_types=1);
 
 namespace Webware\Mailer;
 
+use Laminas\ServiceManager\Factory\DelegatorFactoryInterface;
+use Override;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
+use RuntimeException;
 
-final class MailerAwareDelegator
+final class MailerAwareDelegator implements DelegatorFactoryInterface
 {
-    public function __invoke(ContainerInterface $container, string $serviceName, callable $callback): mixed
-    {
+    /**
+     * @param callable(): mixed $callback
+     * @param array<array-key, mixed>|null $options
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws RuntimeException
+     */
+    #[Override]
+    public function __invoke(
+        ContainerInterface $container,
+        string $name,
+        callable $callback,
+        ?array $options = null,
+    ): mixed {
+        /** @var object $service */
         $service = $callback();
         if (!$service instanceof MailerAwareInterface) {
             return $service;
         }
 
-        /** @var MailerInterface $mailer */
         $mailer = $container->get(MailerInterface::class);
+        if (!$mailer instanceof Mailer) {
+            throw new RuntimeException(
+                'Delegator for MailerAwareInterface services requires a Webware\Mailer\Mailer instance.',
+            );
+        }
+
         $service->setMailer($mailer);
 
         return $service;

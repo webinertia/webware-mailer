@@ -14,13 +14,14 @@ declare(strict_types=1);
 
 namespace Webware\Mailer\CommandBus;
 
+use InvalidArgumentException;
 use Override;
-use Webware\CommandBus\CommandInterface;
-use Webware\CommandBus\Event\EventAwareInterface;
-use Webware\CommandBus\Event\EventInterface;
 use Webware\Mailer\Event\MessageEvent;
+use Webware\MessageBus\Command\CommandInterface;
+use Webware\MessageBus\Event\EventAwareInterface;
+use Webware\MessageBus\Event\EventInterface;
 
-final readonly class SendEmailCommand implements CommandInterface, EventAwareInterface
+final class SendEmailCommand implements CommandInterface, EventAwareInterface
 {
     public function __construct(
         private string $to,
@@ -57,5 +58,12 @@ final readonly class SendEmailCommand implements CommandInterface, EventAwareInt
     }
 
     #[Override]
-    public function setEvent(EventInterface|MessageEvent $event): void {}
+    public function setEvent(EventInterface $event): void
+    {
+        if (!$event instanceof MessageEvent) {
+            throw new InvalidArgumentException('SendEmailCommand requires a MessageEvent instance.');
+        }
+
+        $this->event = $event;
+    }
 }

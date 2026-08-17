@@ -14,16 +14,21 @@ declare(strict_types=1);
 
 namespace Webware\Mailer\Container;
 
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\Mailer;
 use Webware\Mailer\MailerInterface;
 
 final class MailerFactory
 {
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
     public function __invoke(ContainerInterface $container): MailerInterface
     {
-        /** @var AdapterInterface $adapter */
         $adapter = $container->get(AdapterInterface::class);
 
         return new Mailer($adapter);

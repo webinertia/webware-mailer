@@ -14,14 +14,19 @@ declare(strict_types=1);
 
 namespace Webware\Mailer\CommandBus;
 
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Webware\Mailer\MailerInterface;
 
 final class SendEmailCommandHandlerFactory
 {
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
     public function __invoke(ContainerInterface $container): SendEmailCommandHandler
     {
-        /** @var MailerInterface $mailer */
         $mailer = $container->get(MailerInterface::class);
 
         return new SendEmailCommandHandler($mailer);
