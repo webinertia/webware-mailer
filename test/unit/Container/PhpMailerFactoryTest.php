@@ -157,6 +157,57 @@ final class PhpMailerFactoryTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
+    public function invokeAppliesSmtpDefaultsWhenKeysMissing(): void
+    {
+        $factory = new PhpMailerFactory();
+        $result = $factory($this->makeContainer([
+            AdapterInterface::class => [
+                'useSmtp' => true,
+                'host' => 'smtp.example.com',
+            ],
+        ]));
+
+        $base = $this->baseMailer($result);
+
+        $this->assertSame('smtp', $base->Mailer);
+        $this->assertSame(25, $base->Port);
+        $this->assertFalse($base->SMTPAuth);
+        $this->assertSame('UTF-8', $base->CharSet);
+        $this->assertSame('base64', $base->Encoding);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function invokeHonorsCharsetAndEncodingConfig(): void
+    {
+        $factory = new PhpMailerFactory();
+        $result = $factory($this->makeContainer([
+            AdapterInterface::class => [
+                'useSmtp' => true,
+                'host' => 'smtp.example.com',
+                'charset' => 'iso-8859-1',
+                'encoding' => 'quoted-printable',
+            ],
+        ]));
+
+        $base = $this->baseMailer($result);
+
+        $this->assertSame('iso-8859-1', $base->CharSet);
+        $this->assertSame('quoted-printable', $base->Encoding);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
     public function invokeSkipsSmtpWhenUseSmtpFlagMissing(): void
     {
         $factory = new PhpMailerFactory();
