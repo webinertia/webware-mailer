@@ -22,7 +22,10 @@ jobs:
     secrets: inherit
     with:
       php-versions: '["8.4", "8.5"]'
-      run-integration: true
+      # Integration suite (Mailpit-backed docker-compose setup) lands in a later
+      # step; keep false until then — an empty suite fails with "No tests
+      # executed!".
+      run-integration: false
       enable-codecov: true
       enable-infection: true
       # Canonical leg for coverage + mutation testing (highest supported PHP).
