@@ -16,14 +16,14 @@ namespace Webware\Mailer;
 
 trait MailerAwareInterfaceTrait
 {
-    protected MailerInterface&Mailer $mailerInterface;
+    protected MailerInterface $mailerInterface;
 
     public function getMailer(): MailerInterface
     {
         return $this->mailerInterface;
     }
 
-    public function setMailer(MailerInterface&Mailer $mailerInterface): void
+    public function setMailer(MailerInterface $mailerInterface): void
     {
         $this->mailerInterface = $mailerInterface;
     }
