@@ -33,7 +33,6 @@ use Webware\Mailer\Container\PhpMailerFactory;
 use Webware\Mailer\Mailer;
 
 use function array_key_exists;
-use function dirname;
 use function fclose;
 use function is_string;
 use function json_decode;
@@ -169,7 +168,7 @@ final class SmtpSendIntegrationTest extends TestCase
      */
     private function startServer(int $port): void
     {
-        $process = new Process([PHP_BINARY, dirname(__DIR__, levels: 2) . '/bin/fake-smtp-server.php', (string) $port]);
+        $process = new Process([PHP_BINARY, __DIR__ . '/TestAsset/fake-smtp-server.php', (string) $port]);
         $process->start();
         $this->process = $process;
 
