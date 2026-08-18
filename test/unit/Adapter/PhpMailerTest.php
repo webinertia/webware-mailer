@@ -64,7 +64,7 @@ final class PhpMailerTest extends TestCase
     #[Test]
     public function altBodySetsAltBodyProperty(): void
     {
-        $base = new BaseMailer();
+        $base    = new BaseMailer();
         $adapter = new PhpMailer($base);
 
         $this->assertSame($adapter, $adapter->altBody('plain text'));
@@ -126,7 +126,7 @@ final class PhpMailerTest extends TestCase
     #[Test]
     public function bodySetsBodyProperty(): void
     {
-        $base = new BaseMailer();
+        $base    = new BaseMailer();
         $adapter = new PhpMailer($base);
 
         $this->assertSame($adapter, $adapter->body('<p>html</p>'));
@@ -154,7 +154,7 @@ final class PhpMailerTest extends TestCase
     #[Test]
     public function charsetSetsCharSetProperty(): void
     {
-        $base = new BaseMailer();
+        $base    = new BaseMailer();
         $adapter = new PhpMailer($base);
 
         $this->assertSame($adapter, $adapter->charset('iso-8859-1'));
@@ -167,7 +167,7 @@ final class PhpMailerTest extends TestCase
     #[Test]
     public function encodingSetsEncodingProperty(): void
     {
-        $base = new BaseMailer();
+        $base    = new BaseMailer();
         $adapter = new PhpMailer($base);
 
         $this->assertSame($adapter, $adapter->encoding('quoted-printable'));
@@ -193,6 +193,20 @@ final class PhpMailerTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
+    public function isHtmlDefaultsToTrue(): void
+    {
+        $base    = new BaseMailer();
+        $adapter = new PhpMailer($base);
+
+        $adapter->isHtml();
+
+        $this->assertSame('text/html', $base->ContentType);
+    }
+
+    /**
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
     public function isHtmlDelegatesToIsHTML(): void
     {
         $base = $this->createMock(BaseMailer::class);
@@ -201,20 +215,6 @@ final class PhpMailerTest extends TestCase
         $adapter = new PhpMailer($base);
 
         $this->assertSame($adapter, $adapter->isHtml(true));
-    }
-
-    /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function isHtmlDefaultsToTrue(): void
-    {
-        $base = new BaseMailer();
-        $adapter = new PhpMailer($base);
-
-        $adapter->isHtml();
-
-        $this->assertSame('text/html', $base->ContentType);
     }
 
     /**
@@ -261,25 +261,6 @@ final class PhpMailerTest extends TestCase
     }
 
     /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function resetClearsSubjectBodyAndAltBody(): void
-    {
-        $base = new BaseMailer();
-        $base->Subject = 'subject';
-        $base->Body = 'body';
-        $base->AltBody = 'alt';
-
-        $adapter = new PhpMailer($base);
-
-        $this->assertSame($adapter, $adapter->reset());
-        $this->assertSame('', $base->Subject);
-        $this->assertSame('', $base->Body);
-        $this->assertSame('', $base->AltBody);
-    }
-
-    /**
      * @throws MailerException
      * @throws \PHPUnit\Exception
      */
@@ -306,6 +287,25 @@ final class PhpMailerTest extends TestCase
     }
 
     /**
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function resetClearsSubjectBodyAndAltBody(): void
+    {
+        $base          = new BaseMailer();
+        $base->Subject = 'subject';
+        $base->Body    = 'body';
+        $base->AltBody = 'alt';
+
+        $adapter = new PhpMailer($base);
+
+        $this->assertSame($adapter, $adapter->reset());
+        $this->assertSame('', $base->Subject);
+        $this->assertSame('', $base->Body);
+        $this->assertSame('', $base->AltBody);
+    }
+
+    /**
      * @throws MailerException
      * @throws \PHPUnit\Exception
      */
@@ -326,7 +326,7 @@ final class PhpMailerTest extends TestCase
     #[Test]
     public function subjectSetsSubjectProperty(): void
     {
-        $base = new BaseMailer();
+        $base    = new BaseMailer();
         $adapter = new PhpMailer($base);
 
         $this->assertSame($adapter, $adapter->subject('Hello'));

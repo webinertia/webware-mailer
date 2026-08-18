@@ -38,7 +38,7 @@ final class MailerFactoryTest extends TestCase
     #[Test]
     public function invokeReturnsMailerWithAdapter(): void
     {
-        $adapter = $this->createStub(AdapterInterface::class);
+        $adapter   = $this->createStub(AdapterInterface::class);
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
             ->willReturnCallback(
@@ -46,7 +46,7 @@ final class MailerFactoryTest extends TestCase
             );
 
         $factory = new MailerFactory();
-        $result = $factory($container);
+        $result  = $factory($container);
 
         $this->assertInstanceOf(Mailer::class, $result);
         $this->assertInstanceOf(MailerInterface::class, $result);

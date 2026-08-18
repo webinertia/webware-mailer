@@ -39,59 +39,27 @@ final class PhpMailerFactoryTest extends TestCase
     /**
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function invokeThrowsWhenAdapterConfigMissing(): void
-    {
-        $factory = new PhpMailerFactory();
-
-        $this->expectException(ServiceNotCreatedException::class);
-        $this->expectExceptionMessageIs(
-            'Service: ' . PhpMailer::class . ' could not be created. Missing configuration.',
-        );
-
-        $factory($this->makeContainer([]));
-    }
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function invokeReturnsPhpMailerWithDefaultExceptionsFlag(): void
+    public function invokeAppliesSmtpDefaultsWhenKeysMissing(): void
     {
         $factory = new PhpMailerFactory();
-        $result = $factory($this->makeContainer([
+        $result  = $factory($this->makeContainer([
             AdapterInterface::class => [
-                'useSmtp' => false,
+                'useSmtp' => true,
+                'host'    => 'smtp.example.com',
             ],
         ]));
 
-        $this->assertInstanceOf(PhpMailer::class, $result);
-        $this->assertTrue($this->exceptionsFlag($this->baseMailer($result)));
-    }
+        $base = $this->baseMailer($result);
 
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws ReflectionException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function invokeHonorsEnableExceptionsConfig(): void
-    {
-        $factory = new PhpMailerFactory();
-        $result = $factory($this->makeContainer([
-            AdapterInterface::class => [
-                'useSmtp' => false,
-                'enableExceptions' => false,
-            ],
-        ]));
-
-        $this->assertFalse($this->exceptionsFlag($this->baseMailer($result)));
+        $this->assertSame('smtp', $base->Mailer);
+        $this->assertSame(25, $base->Port);
+        $this->assertFalse($base->SMTPAuth);
+        $this->assertSame('UTF-8', $base->CharSet);
+        $this->assertSame('base64', $base->Encoding);
     }
 
     /**
@@ -104,16 +72,16 @@ final class PhpMailerFactoryTest extends TestCase
     public function invokeConfiguresSmtpWhenEnabled(): void
     {
         $factory = new PhpMailerFactory();
-        $result = $factory($this->makeContainer([
+        $result  = $factory($this->makeContainer([
             AdapterInterface::class => [
-                'useSmtp' => true,
+                'useSmtp'          => true,
                 'enableExceptions' => true,
-                'host' => 'smtp.example.com',
-                'port' => 587,
-                'smtp_auth' => true,
-                'username' => 'user',
+                'host'             => 'smtp.example.com',
+                'port'             => 587,
+                'smtp_auth'        => true,
+                'username'         => 'user',
                 // @mago-expect lint:no-literal-password
-                'password' => 'pass',
+                'password'    => 'pass',
                 'smtp_secure' => 'tls',
             ],
         ]));
@@ -136,61 +104,14 @@ final class PhpMailerFactoryTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function invokeHonorsTimeoutConfig(): void
-    {
-        $factory = new PhpMailerFactory();
-        $result = $factory($this->makeContainer([
-            AdapterInterface::class => [
-                'useSmtp' => true,
-                'host' => 'smtp.example.com',
-                'timeout' => 45,
-            ],
-        ]));
-
-        $this->assertSame(45, $this->baseMailer($result)->Timeout);
-    }
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws ReflectionException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function invokeAppliesSmtpDefaultsWhenKeysMissing(): void
-    {
-        $factory = new PhpMailerFactory();
-        $result = $factory($this->makeContainer([
-            AdapterInterface::class => [
-                'useSmtp' => true,
-                'host' => 'smtp.example.com',
-            ],
-        ]));
-
-        $base = $this->baseMailer($result);
-
-        $this->assertSame('smtp', $base->Mailer);
-        $this->assertSame(25, $base->Port);
-        $this->assertFalse($base->SMTPAuth);
-        $this->assertSame('UTF-8', $base->CharSet);
-        $this->assertSame('base64', $base->Encoding);
-    }
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws ReflectionException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
     public function invokeHonorsCharsetAndEncodingConfig(): void
     {
         $factory = new PhpMailerFactory();
-        $result = $factory($this->makeContainer([
+        $result  = $factory($this->makeContainer([
             AdapterInterface::class => [
-                'useSmtp' => true,
-                'host' => 'smtp.example.com',
-                'charset' => 'iso-8859-1',
+                'useSmtp'  => true,
+                'host'     => 'smtp.example.com',
+                'charset'  => 'iso-8859-1',
                 'encoding' => 'quoted-printable',
             ],
         ]));
@@ -208,10 +129,71 @@ final class PhpMailerFactoryTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
+    public function invokeHonorsEnableExceptionsConfig(): void
+    {
+        $factory = new PhpMailerFactory();
+        $result  = $factory($this->makeContainer([
+            AdapterInterface::class => [
+                'useSmtp'          => false,
+                'enableExceptions' => false,
+            ],
+        ]));
+
+        $this->assertFalse($this->exceptionsFlag($this->baseMailer($result)));
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function invokeHonorsTimeoutConfig(): void
+    {
+        $factory = new PhpMailerFactory();
+        $result  = $factory($this->makeContainer([
+            AdapterInterface::class => [
+                'useSmtp' => true,
+                'host'    => 'smtp.example.com',
+                'timeout' => 45,
+            ],
+        ]));
+
+        $this->assertSame(45, $this->baseMailer($result)->Timeout);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function invokeReturnsPhpMailerWithDefaultExceptionsFlag(): void
+    {
+        $factory = new PhpMailerFactory();
+        $result  = $factory($this->makeContainer([
+            AdapterInterface::class => [
+                'useSmtp' => false,
+            ],
+        ]));
+
+        $this->assertInstanceOf(PhpMailer::class, $result);
+        $this->assertTrue($this->exceptionsFlag($this->baseMailer($result)));
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
     public function invokeSkipsSmtpWhenUseSmtpFlagMissing(): void
     {
         $factory = new PhpMailerFactory();
-        $result = $factory($this->makeContainer([
+        $result  = $factory($this->makeContainer([
             AdapterInterface::class => [
                 'host' => 'smtp.example.com',
             ],
@@ -221,18 +203,21 @@ final class PhpMailerFactoryTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @throws \PHPUnit\Exception
      */
-    private function makeContainer(array $config): ContainerInterface
+    #[Test]
+    public function invokeThrowsWhenAdapterConfigMissing(): void
     {
-        $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')
-            ->willReturnCallback(
-                static fn(string $id): mixed => 'config' === $id ? $config : null,
-            );
+        $factory = new PhpMailerFactory();
 
-        return $container;
+        $this->expectException(ServiceNotCreatedException::class);
+        $this->expectExceptionMessageIs(
+            'Service: ' . PhpMailer::class . ' could not be created. Missing configuration.',
+        );
+
+        $factory($this->makeContainer([]));
     }
 
     /**
@@ -246,7 +231,7 @@ final class PhpMailerFactoryTest extends TestCase
         /** @var mixed $base */
         $base = $property->getValue($adapter);
 
-        if (!$base instanceof BaseMailer) {
+        if (! $base instanceof BaseMailer) {
             throw new LogicException('Expected a BaseMailer instance.');
         }
 
@@ -264,10 +249,25 @@ final class PhpMailerFactoryTest extends TestCase
         /** @var mixed $value */
         $value = $property->getValue($base);
 
-        if (!is_bool($value)) {
+        if (! is_bool($value)) {
             throw new LogicException('Expected a bool value.');
         }
 
         return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     * @throws \PHPUnit\Exception
+     */
+    private function makeContainer(array $config): ContainerInterface
+    {
+        $container = $this->createStub(ContainerInterface::class);
+        $container->method('get')
+            ->willReturnCallback(
+                static fn(string $id): mixed => 'config' === $id ? $config : null,
+            );
+
+        return $container;
     }
 }

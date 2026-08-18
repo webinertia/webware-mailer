@@ -39,12 +39,12 @@ final class MailerAwareDelegator implements DelegatorFactoryInterface
     ): mixed {
         /** @var object $service */
         $service = $callback();
-        if (!$service instanceof MailerAwareInterface) {
+        if (! $service instanceof MailerAwareInterface) {
             return $service;
         }
 
         $mailer = $container->get(MailerInterface::class);
-        if (!$mailer instanceof Mailer) {
+        if (! $mailer instanceof Mailer) {
             throw new RuntimeException(
                 'Delegator for MailerAwareInterface services requires a Webware\Mailer\Mailer instance.',
             );
