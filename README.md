@@ -4,6 +4,8 @@
 [![Latest Version](https://img.shields.io/packagist/v/webware/webware-mailer)](https://packagist.org/packages/webware/webware-mailer)
 [![License](https://img.shields.io/github/license/webinertia/webware-mailer)](LICENSE)
 [![Continuous Integration](https://github.com/webinertia/webware-mailer/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/webinertia/webware-mailer/actions/workflows/continuous-integration.yml)
+[![codecov](https://codecov.io/gh/webinertia/webware-mailer/graph/badge.svg)](https://codecov.io/gh/webinertia/webware-mailer)
+[![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fwebinertia%2Fwebware-mailer%2F1.0.x)](https://dashboard.stryker-mutator.io/reports/github.com/webinertia/webware-mailer/1.0.x)
 
 Php Mail abstraction for a variety of php mailer libraries for Mezzio
 applications. Ships with a [PHPMailer](https://github.com/PHPMailer/PHPMailer)
