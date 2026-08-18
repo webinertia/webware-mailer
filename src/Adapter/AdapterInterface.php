@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Webware\Mailer\Adapter;
 
+/** @api */
 interface AdapterInterface extends MessageInterface
 {
     public function isMail(): self;

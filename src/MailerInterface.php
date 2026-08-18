@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Webware\Mailer;
 
+/** @api */
 interface MailerInterface
 {
     public function getAdapter(): ?Adapter\AdapterInterface;

@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Webware\Mailer\Adapter;
 
+/** @api */
 interface MessageInterface
 {
     public function addHeader(string $name, string $value): self;
