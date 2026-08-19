@@ -11,3 +11,5 @@
 /.vscode
 /mago-results.txt
 *:Zone.Identifier
+/.specify/
+/specs/
