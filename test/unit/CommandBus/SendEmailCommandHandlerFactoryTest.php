@@ -37,7 +37,7 @@ final class SendEmailCommandHandlerFactoryTest extends TestCase
     #[Test]
     public function invokeReturnsSendEmailCommandHandler(): void
     {
-        $mailer = $this->createStub(MailerInterface::class);
+        $mailer    = $this->createStub(MailerInterface::class);
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
             ->willReturnCallback(
@@ -45,7 +45,7 @@ final class SendEmailCommandHandlerFactoryTest extends TestCase
             );
 
         $factory = new SendEmailCommandHandlerFactory();
-        $result = $factory($container);
+        $result  = $factory($container);
 
         $this->assertInstanceOf(SendEmailCommandHandler::class, $result);
     }

@@ -74,11 +74,11 @@ final class SmtpSendIntegrationTest extends TestCase
         $this->startServer($port);
 
         $adapter = $this->adapter([
-            'useSmtp' => true,
+            'useSmtp'          => true,
             'enableExceptions' => true,
-            'host' => '127.0.0.1',
-            'port' => $port,
-            'smtp_auth' => false,
+            'host'             => '127.0.0.1',
+            'port'             => $port,
+            'smtp_auth'        => false,
         ]);
 
         $adapter->to('to@example.com')
@@ -109,12 +109,12 @@ final class SmtpSendIntegrationTest extends TestCase
     public function sendThrowsWhenSmtpUnreachable(): void
     {
         $adapter = $this->adapter([
-            'useSmtp' => true,
+            'useSmtp'          => true,
             'enableExceptions' => true,
-            'host' => '127.0.0.1',
-            'port' => $this->freePort(),
-            'smtp_auth' => false,
-            'timeout' => 2,
+            'host'             => '127.0.0.1',
+            'port'             => $this->freePort(),
+            'smtp_auth'        => false,
+            'timeout'          => 2,
         ]);
 
         $mailer = new Mailer($adapter);
@@ -166,39 +166,27 @@ final class SmtpSendIntegrationTest extends TestCase
     /**
      * @throws RuntimeException
      */
-    private function startServer(int $port): void
+    private function freePort(): int
     {
-        $process = new Process([PHP_BINARY, __DIR__ . '/TestAsset/fake-smtp-server.php', (string) $port]);
-        $process->start();
-        $this->process = $process;
+        $errno  = null;
+        $errstr = null;
+        $socket = stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
+        if (false === $socket) {
+            throw new RuntimeException('Unable to allocate a free port (' . ($errno ?? 0) . '): ' . ($errstr ?? ''));
+        }
 
-        $process->waitUntil(static fn(string $type, string $output): bool => str_contains($type . $output, 'READY'));
-    }
+        $address = stream_socket_get_name($socket, remote: false);
+        fclose($socket);
 
-    /**
-     * @throws JsonException
-     * @throws RuntimeException
-     */
-    private function serverOutput(): string
-    {
-        $process = $this->requireProcess();
-        $process->wait();
-
-        $stdout = $process->getOutput();
-        $position = strrpos(haystack: $stdout, needle: '{');
-
+        $position = strrpos(
+            haystack: (string) $address,
+            needle  : ':',
+        );
         if (false === $position) {
-            throw new RuntimeException('Unexpected SMTP server output.');
+            throw new RuntimeException('Unexpected socket address.');
         }
 
-        /** @var array<string, mixed> $payload */
-        $payload = json_decode(substr($stdout, $position), associative: true, depth: 512, flags: JSON_THROW_ON_ERROR);
-
-        if (!is_string($payload['data'] ?? null)) {
-            throw new RuntimeException('Unexpected SMTP server output.');
-        }
-
-        return $payload['data'];
+        return (int) substr((string) $address, $position + 1);
     }
 
     /**
@@ -214,25 +202,43 @@ final class SmtpSendIntegrationTest extends TestCase
     }
 
     /**
+     * @throws JsonException
      * @throws RuntimeException
      */
-    private function freePort(): int
+    private function serverOutput(): string
     {
-        $errno = null;
-        $errstr = null;
-        $socket = stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
-        if (false === $socket) {
-            throw new RuntimeException('Unable to allocate a free port (' . ($errno ?? 0) . '): ' . ($errstr ?? ''));
-        }
+        $process = $this->requireProcess();
+        $process->wait();
 
-        $address = stream_socket_get_name($socket, remote: false);
-        fclose($socket);
+        $stdout   = $process->getOutput();
+        $position = strrpos(
+            haystack: $stdout,
+            needle  : '{',
+        );
 
-        $position = strrpos(haystack: (string) $address, needle: ':');
         if (false === $position) {
-            throw new RuntimeException('Unexpected socket address.');
+            throw new RuntimeException('Unexpected SMTP server output.');
         }
 
-        return (int) substr((string) $address, $position + 1);
+        /** @var array<string, mixed> $payload */
+        $payload = json_decode(substr($stdout, $position), associative: true, depth: 512, flags: JSON_THROW_ON_ERROR);
+
+        if (! is_string($payload['data'] ?? null)) {
+            throw new RuntimeException('Unexpected SMTP server output.');
+        }
+
+        return $payload['data'];
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    private function startServer(int $port): void
+    {
+        $process = new Process([PHP_BINARY, __DIR__ . '/TestAsset/fake-smtp-server.php', (string) $port]);
+        $process->start();
+        $this->process = $process;
+
+        $process->waitUntil(static fn(string $type, string $output): bool => str_contains($type . $output, 'READY'));
     }
 }

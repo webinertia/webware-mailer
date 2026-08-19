@@ -34,6 +34,27 @@ final class MailerMiddlewareTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
+    public function processContinuesWithoutAdapter(): void
+    {
+        $mailer = new Mailer(null);
+
+        $requestWithAttribute = $this->createStub(ServerRequestInterface::class);
+        $request              = $this->createStub(ServerRequestInterface::class);
+        $request->method('withAttribute')->willReturn($requestWithAttribute);
+
+        $response = $this->createStub(ResponseInterface::class);
+        $handler  = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->with($requestWithAttribute)->willReturn($response);
+
+        $middleware = new MailerMiddleware($mailer, []);
+
+        $this->assertSame($response, $middleware->process($request, $handler));
+    }
+
+    /**
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
     public function processSetsFromAddressAndInjectsMailer(): void
     {
         $mailer = new Mailer($this->createStub(AdapterInterface::class));
@@ -44,9 +65,9 @@ final class MailerMiddlewareTest extends TestCase
         $mailer->setAdapter($adapter);
 
         $requestWithAttribute = $this->createStub(ServerRequestInterface::class);
-        $request = $this->createStub(ServerRequestInterface::class);
-        $capturedAttribute = '';
-        $capturedValue = null;
+        $request              = $this->createStub(ServerRequestInterface::class);
+        $capturedAttribute    = '';
+        $capturedValue        = null;
         $request->method('withAttribute')
             ->willReturnCallback(
                 static function (string $attribute, mixed $value) use (
@@ -65,7 +86,7 @@ final class MailerMiddlewareTest extends TestCase
             );
 
         $response = $this->createStub(ResponseInterface::class);
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler  = $this->createMock(RequestHandlerInterface::class);
         $handler->expects($this->once())->method('handle')->with($requestWithAttribute)->willReturn($response);
 
         $middleware = new MailerMiddleware($mailer, [MailerMiddleware::FROM_ADDRESS_KEY => 'sender@example.com']);
@@ -81,39 +102,18 @@ final class MailerMiddlewareTest extends TestCase
     #[Test]
     public function processSkipsFromWhenConfigMissing(): void
     {
-        $mailer = new Mailer(null);
+        $mailer  = new Mailer(null);
         $adapter = $this->createMock(AdapterInterface::class);
         $adapter->expects($this->never())->method('from');
 
         $mailer->setAdapter($adapter);
 
         $requestWithAttribute = $this->createStub(ServerRequestInterface::class);
-        $request = $this->createStub(ServerRequestInterface::class);
+        $request              = $this->createStub(ServerRequestInterface::class);
         $request->method('withAttribute')->willReturn($requestWithAttribute);
 
         $response = $this->createStub(ResponseInterface::class);
-        $handler = $this->createMock(RequestHandlerInterface::class);
-        $handler->expects($this->once())->method('handle')->with($requestWithAttribute)->willReturn($response);
-
-        $middleware = new MailerMiddleware($mailer, []);
-
-        $this->assertSame($response, $middleware->process($request, $handler));
-    }
-
-    /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function processContinuesWithoutAdapter(): void
-    {
-        $mailer = new Mailer(null);
-
-        $requestWithAttribute = $this->createStub(ServerRequestInterface::class);
-        $request = $this->createStub(ServerRequestInterface::class);
-        $request->method('withAttribute')->willReturn($requestWithAttribute);
-
-        $response = $this->createStub(ResponseInterface::class);
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler  = $this->createMock(RequestHandlerInterface::class);
         $handler->expects($this->once())->method('handle')->with($requestWithAttribute)->willReturn($response);
 
         $middleware = new MailerMiddleware($mailer, []);

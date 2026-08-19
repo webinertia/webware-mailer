@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 $port = (int) ($argv[1] ?? 0);
 
-$errno = null;
+$errno  = null;
 $errstr = null;
 $server = stream_socket_server("tcp://127.0.0.1:{$port}", $errno, $errstr);
 if (false === $server) {
@@ -33,7 +33,10 @@ $data = '';
 $line = fgets($client);
 
 while (false !== $line) {
-    $line = rtrim(string: $line, characters: "\r\n");
+    $line = rtrim(
+        string    : $line,
+        characters: "\r\n",
+    );
 
     if (str_starts_with($line, 'EHLO') || str_starts_with($line, 'HELO')) {
         fwrite($client, data: "250-fake-smtp\r\n250 OK\r\n");
@@ -56,7 +59,7 @@ while (false !== $line) {
                 break;
             }
 
-            $data .= $dataLine;
+            $data     .= $dataLine;
             $dataLine = fgets($client);
         }
 

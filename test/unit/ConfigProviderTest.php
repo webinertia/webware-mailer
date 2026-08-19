@@ -56,7 +56,7 @@ final class ConfigProviderTest extends TestCase
         $this->assertSame(
             [
                 'enableExceptions' => true,
-                'useSmtp' => false,
+                'useSmtp'          => false,
             ],
             $provider->getAdapterConfig(),
         );
@@ -86,15 +86,15 @@ final class ConfigProviderTest extends TestCase
 
         $this->assertSame(
             [
-                'aliases' => [
+                'aliases'   => [
                     AdapterInterface::class => PhpMailer::class,
-                    MailerInterface::class => Mailer::class,
+                    MailerInterface::class  => Mailer::class,
                 ],
                 'factories' => [
-                    PhpMailer::class => PhpMailerFactory::class,
+                    PhpMailer::class               => PhpMailerFactory::class,
                     SendEmailCommandHandler::class => SendEmailCommandHandlerFactory::class,
-                    Mailer::class => MailerFactory::class,
-                    MailerMiddleware::class => MailerMiddlewareFactory::class,
+                    Mailer::class                  => MailerFactory::class,
+                    MailerMiddleware::class        => MailerMiddlewareFactory::class,
                 ],
             ],
             $provider->getDependencies(),
@@ -133,7 +133,7 @@ final class ConfigProviderTest extends TestCase
     public function invokeMergesAllConfiguration(): void
     {
         $provider = new ConfigProvider();
-        $config = $provider();
+        $config   = $provider();
 
         $this->assertSame($provider->getDependencies(), $config['dependencies'] ?? null);
         $this->assertSame($provider->getTemplates(), $config['templates'] ?? null);

@@ -41,7 +41,7 @@ final class MailerMiddlewareFactoryTest extends TestCase
     #[Test]
     public function invokeReturnsMailerMiddleware(): void
     {
-        $mailer = $this->createStub(MailerInterface::class);
+        $mailer    = $this->createStub(MailerInterface::class);
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
             ->willReturnCallback(
@@ -65,7 +65,7 @@ final class MailerMiddlewareFactoryTest extends TestCase
             );
 
         $factory = new MailerMiddlewareFactory();
-        $result = $factory($container);
+        $result  = $factory($container);
 
         $this->assertInstanceOf(MailerMiddleware::class, $result);
     }
@@ -79,7 +79,7 @@ final class MailerMiddlewareFactoryTest extends TestCase
     #[Test]
     public function invokeThrowsWhenAdapterSettingsMissing(): void
     {
-        $mailer = $this->createStub(MailerInterface::class);
+        $mailer    = $this->createStub(MailerInterface::class);
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
             ->willReturnCallback(
@@ -115,7 +115,7 @@ final class MailerMiddlewareFactoryTest extends TestCase
     #[Test]
     public function invokeThrowsWhenMailerConfigIsNotArray(): void
     {
-        $mailer = $this->createStub(MailerInterface::class);
+        $mailer    = $this->createStub(MailerInterface::class);
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
             ->willReturnCallback(

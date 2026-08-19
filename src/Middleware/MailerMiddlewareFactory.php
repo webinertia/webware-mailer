@@ -36,13 +36,13 @@ final class MailerMiddlewareFactory
         /** @var array<string, mixed> $appConfig */
         $appConfig = $container->get('config');
 
-        if (!is_array($appConfig[ConfigProvider::class] ?? null)) {
+        if (! is_array($appConfig[ConfigProvider::class] ?? null)) {
             throw new RuntimeException('Service: ' . ConfigProvider::class . ' configuration must be an array.');
         }
 
         $mailerConfig = $appConfig[ConfigProvider::class];
 
-        if (!is_array($mailerConfig[AdapterInterface::class] ?? null)) {
+        if (! is_array($mailerConfig[AdapterInterface::class] ?? null)) {
             throw new RuntimeException('Service: ' . AdapterInterface::class . ' configuration must be an array.');
         }
 

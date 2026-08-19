@@ -38,7 +38,7 @@ final class SendEmailCommandTest extends TestCase
     #[Test]
     public function gettersReturnConstructorValues(): void
     {
-        $event = new MessageEvent();
+        $event   = new MessageEvent();
         $command = new SendEmailCommand(
             'to@example.com',
             'from@example.com',
@@ -52,26 +52,6 @@ final class SendEmailCommandTest extends TestCase
         $this->assertSame('Subject', $command->getSubject());
         $this->assertSame('Body', $command->getBody());
         $this->assertSame($event, $command->getEvent());
-    }
-
-    /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function setEventReplacesMessageEvent(): void
-    {
-        $command = new SendEmailCommand(
-            'to@example.com',
-            'from@example.com',
-            'Subject',
-            'Body',
-            new MessageEvent('first'),
-        );
-        $replacement = new MessageEvent('second');
-
-        $command->setEvent($replacement);
-
-        $this->assertSame($replacement, $command->getEvent());
     }
 
     /**
@@ -92,5 +72,25 @@ final class SendEmailCommandTest extends TestCase
         $this->expectExceptionMessageIs('SendEmailCommand requires a MessageEvent instance.');
 
         $command->setEvent(new Event('other'));
+    }
+
+    /**
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function setEventReplacesMessageEvent(): void
+    {
+        $command = new SendEmailCommand(
+            'to@example.com',
+            'from@example.com',
+            'Subject',
+            'Body',
+            new MessageEvent('first'),
+        );
+        $replacement = new MessageEvent('second');
+
+        $command->setEvent($replacement);
+
+        $this->assertSame($replacement, $command->getEvent());
     }
 }

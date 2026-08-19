@@ -87,7 +87,7 @@ final class MailerAwareDelegatorTest extends TestCase
     public function invokeThrowsWhenMailerIsNotMailerInstance(): void
     {
         $service = $this->createStub(MailerAwareInterface::class);
-        $mailer = $this->createStub(MailerInterface::class);
+        $mailer  = $this->createStub(MailerInterface::class);
 
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')

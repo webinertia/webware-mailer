@@ -35,32 +35,6 @@ final class SendEmailCommandHandlerTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function handleReturnsSuccessResultWhenMailSent(): void
-    {
-        $command = $this->makeCommand();
-        $adapter = $this->createMock(AdapterInterface::class);
-        $adapter->expects($this->once())->method('to')->with('to@example.com')->willReturnSelf();
-        $adapter->expects($this->once())->method('from')->with('from@example.com')->willReturnSelf();
-        $adapter->expects($this->once())->method('subject')->with('Subject')->willReturnSelf();
-        $adapter->expects($this->once())->method('body')->with('Body')->willReturnSelf();
-
-        $mailer = $this->createStub(MailerInterface::class);
-        $mailer->method('getAdapter')->willReturn($adapter);
-        $mailer->method('send')->willReturn(true);
-
-        $handler = new SendEmailCommandHandler($mailer);
-        $result = $handler->handle($command);
-
-        $this->assertInstanceOf(CommandResultInterface::class, $result);
-        $this->assertSame($command, $result->getCommand());
-        $this->assertSame(MessageStatus::Success, $result->getStatus());
-        $this->assertSame('Email sent successfully', $result->getResult());
-    }
-
-    /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
     public function handleReturnsFailureResultWhenNoAdapterConfigured(): void
     {
         $command = $this->makeCommand();
@@ -69,7 +43,7 @@ final class SendEmailCommandHandlerTest extends TestCase
         $mailer->method('getAdapter')->willReturn(null);
 
         $handler = new SendEmailCommandHandler($mailer);
-        $result = $handler->handle($command);
+        $result  = $handler->handle($command);
 
         $this->assertSame(MessageStatus::Failure, $result->getStatus());
         $this->assertSame('No adapter configured on Mailer instance.', $result->getResult());
@@ -93,10 +67,36 @@ final class SendEmailCommandHandlerTest extends TestCase
         $mailer->method('send')->willThrowException(new RuntimeException('boom'));
 
         $handler = new SendEmailCommandHandler($mailer);
-        $result = $handler->handle($command);
+        $result  = $handler->handle($command);
 
         $this->assertSame(MessageStatus::Failure, $result->getStatus());
         $this->assertSame('boom', $result->getResult());
+    }
+
+    /**
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function handleReturnsSuccessResultWhenMailSent(): void
+    {
+        $command = $this->makeCommand();
+        $adapter = $this->createMock(AdapterInterface::class);
+        $adapter->expects($this->once())->method('to')->with('to@example.com')->willReturnSelf();
+        $adapter->expects($this->once())->method('from')->with('from@example.com')->willReturnSelf();
+        $adapter->expects($this->once())->method('subject')->with('Subject')->willReturnSelf();
+        $adapter->expects($this->once())->method('body')->with('Body')->willReturnSelf();
+
+        $mailer = $this->createStub(MailerInterface::class);
+        $mailer->method('getAdapter')->willReturn($adapter);
+        $mailer->method('send')->willReturn(true);
+
+        $handler = new SendEmailCommandHandler($mailer);
+        $result  = $handler->handle($command);
+
+        $this->assertInstanceOf(CommandResultInterface::class, $result);
+        $this->assertSame($command, $result->getCommand());
+        $this->assertSame(MessageStatus::Success, $result->getStatus());
+        $this->assertSame('Email sent successfully', $result->getResult());
     }
 
     /**

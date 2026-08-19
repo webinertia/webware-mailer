@@ -30,14 +30,14 @@ final class PhpMailerFactory
     private function configureSmtp(BaseMailer $mailer, array $adapterConfig): void
     {
         $mailer->isSMTP();
-        $mailer->Host = (string) ($adapterConfig['host'] ?? '');
-        $mailer->Port = (int) ($adapterConfig['port'] ?? 25);
-        $mailer->SMTPAuth = ($adapterConfig['smtp_auth'] ?? false) === true;
-        $mailer->Username = (string) ($adapterConfig['username'] ?? '');
-        $mailer->Password = (string) ($adapterConfig['password'] ?? '');
-        $mailer->CharSet = (string) ($adapterConfig['charset'] ?? 'UTF-8');
-        $mailer->Encoding = (string) ($adapterConfig['encoding'] ?? 'base64');
-        $mailer->Timeout = (int) ($adapterConfig['timeout'] ?? 30);
+        $mailer->Host       = (string) ($adapterConfig['host'] ?? '');
+        $mailer->Port       = (int) ($adapterConfig['port'] ?? 25);
+        $mailer->SMTPAuth   = ($adapterConfig['smtp_auth'] ?? false) === true;
+        $mailer->Username   = (string) ($adapterConfig['username'] ?? '');
+        $mailer->Password   = (string) ($adapterConfig['password'] ?? '');
+        $mailer->CharSet    = (string) ($adapterConfig['charset'] ?? 'UTF-8');
+        $mailer->Encoding   = (string) ($adapterConfig['encoding'] ?? 'base64');
+        $mailer->Timeout    = (int) ($adapterConfig['timeout'] ?? 30);
         $mailer->SMTPSecure = (string) ($adapterConfig['smtp_secure'] ?? '');
     }
 

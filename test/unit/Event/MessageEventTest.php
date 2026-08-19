@@ -36,22 +36,22 @@ final class MessageEventTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function nameDefaultsToClassWhenUnset(): void
+    public function explicitNameIsPreserved(): void
     {
-        $event = new MessageEvent();
+        $event = new MessageEvent('custom');
 
-        $this->assertSame(MessageEvent::class, $event->getName());
+        $this->assertSame('custom', $event->getName());
     }
 
     /**
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function explicitNameIsPreserved(): void
+    public function nameDefaultsToClassWhenUnset(): void
     {
-        $event = new MessageEvent('custom');
+        $event = new MessageEvent();
 
-        $this->assertSame('custom', $event->getName());
+        $this->assertSame(MessageEvent::class, $event->getName());
     }
 
     /**
@@ -74,7 +74,7 @@ final class MessageEventTest extends TestCase
     #[Test]
     public function targetRoundTrips(): void
     {
-        $event = new MessageEvent();
+        $event  = new MessageEvent();
         $target = new stdClass();
 
         $event->setTarget($target);

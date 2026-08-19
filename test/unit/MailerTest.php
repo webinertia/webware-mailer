@@ -40,19 +40,6 @@ final class MailerTest extends TestCase
     }
 
     /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function setAdapterUpdatesAdapterAndReturnsSelf(): void
-    {
-        $mailer = new Mailer(null);
-        $adapter = $this->createStub(AdapterInterface::class);
-
-        $this->assertSame($mailer, $mailer->setAdapter($adapter));
-        $this->assertSame($adapter, $mailer->getAdapter());
-    }
-
-    /**
      * @throws \RuntimeException
      * @throws \PHPUnit\Exception
      */
@@ -80,5 +67,18 @@ final class MailerTest extends TestCase
         $this->expectExceptionMessageIs('No adapter configured on Mailer instance.');
 
         $mailer->send();
+    }
+
+    /**
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function setAdapterUpdatesAdapterAndReturnsSelf(): void
+    {
+        $mailer  = new Mailer(null);
+        $adapter = $this->createStub(AdapterInterface::class);
+
+        $this->assertSame($mailer, $mailer->setAdapter($adapter));
+        $this->assertSame($adapter, $mailer->getAdapter());
     }
 }

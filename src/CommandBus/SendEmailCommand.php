@@ -57,10 +57,13 @@ final class SendEmailCommand implements CommandInterface, EventAwareInterface
         return $this->to;
     }
 
+    /**
+     * @throws InvalidArgumentException If the event is not a MessageEvent instance.
+     */
     #[Override]
     public function setEvent(EventInterface $event): void
     {
-        if (!$event instanceof MessageEvent) {
+        if (! $event instanceof MessageEvent) {
             throw new InvalidArgumentException('SendEmailCommand requires a MessageEvent instance.');
         }
 
