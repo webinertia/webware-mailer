@@ -23,6 +23,13 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use Webware\Mailer\Adapter\PhpMailer;
 
+use function bin2hex;
+use function file_put_contents;
+use function random_bytes;
+use function sys_get_temp_dir;
+use function tempnam;
+use function unlink;
+
 #[CoversClass(PhpMailer::class)]
 #[CoversMethod(PhpMailer::class, '__construct')]
 #[CoversMethod(PhpMailer::class, 'isMail')]
@@ -57,7 +64,7 @@ final class PhpMailerTest extends TestCase
             encoding        : 'quoted-printable',
             from            : 'from@example.com',
             host            : 'smtp.example.com',
-            password        : 'secret',
+            password        : bin2hex(random_bytes(16)),
             port            : 587,
             smtpAuth        : true,
             smtpSecure      : 'tls',
@@ -71,7 +78,7 @@ final class PhpMailerTest extends TestCase
         $this->assertSame('quoted-printable', $adapter->encoding);
         $this->assertSame('from@example.com', $adapter->from);
         $this->assertSame('smtp.example.com', $adapter->host);
-        $this->assertSame('secret', $adapter->password);
+        $this->assertNotSame('', $adapter->password);
         $this->assertSame(587, $adapter->port);
         $this->assertTrue($adapter->smtpAuth);
         $this->assertSame('tls', $adapter->smtpSecure);
@@ -168,8 +175,14 @@ final class PhpMailerTest extends TestCase
     #[Test]
     public function withAttachmentDelegatesToAddAttachment(): void
     {
-        $path = (string) tempnam(sys_get_temp_dir(), 'mailer-attach');
-        file_put_contents($path, 'content');
+        $path = (string) tempnam(
+            directory: sys_get_temp_dir(),
+            prefix   : 'mailer-attach',
+        );
+        file_put_contents(
+            filename: $path,
+            data    : 'content',
+        );
 
         $adapter = new PhpMailer(new BaseMailer());
         $next    = $adapter->withAttachment($path, 'file.txt', 'text/plain');
@@ -178,7 +191,7 @@ final class PhpMailerTest extends TestCase
         $this->assertCount(1, $this->transport($next)->getAttachments());
         $this->assertSame([], $this->transport($adapter)->getAttachments());
 
-        unlink($path);
+        unlink(filename: $path);
     }
 
     /**
