@@ -24,6 +24,7 @@ use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\Adapter\PhpMailer;
 use Webware\Mailer\ConfigProvider;
 
+use function array_key_exists;
 use function is_array;
 
 /**
@@ -55,43 +56,73 @@ final class PhpMailerFactory
         $adapterConfig = $candidate;
 
         $enableExceptions = $adapterConfig['enableExceptions'] ?? true;
-        $useSmtp          = $adapterConfig['useSmtp'] ?? false;
-        $from             = $adapterConfig['from'] ?? '';
 
         $mailer = new BaseMailer($enableExceptions);
 
-        if ($useSmtp) {
+        if ($adapterConfig['useSmtp'] ?? false) {
             $mailer->isSMTP();
-            $mailer->Host       = $adapterConfig['host'] ?? '';
-            $mailer->Port       = $adapterConfig['port'] ?? 25;
-            $mailer->SMTPAuth   = $adapterConfig['smtp_auth'] ?? false;
-            $mailer->Username   = $adapterConfig['username'] ?? '';
-            $mailer->Password   = $adapterConfig['password'] ?? '';
-            $mailer->SMTPSecure = $adapterConfig['smtp_secure'] ?? '';
         }
 
-        $mailer->CharSet  = $adapterConfig['charset'] ?? 'UTF-8';
-        $mailer->Encoding = $adapterConfig['encoding'] ?? 'base64';
-        $mailer->Timeout  = $adapterConfig['timeout'] ?? 30;
-
-        if ('' !== $from) {
-            $mailer->setFrom($from);
+        // Only keys the merged config actually provides are applied; anything
+        // absent keeps PHPMailer's own default rather than a value mailer
+        // invented for the host.
+        if (array_key_exists('host', $adapterConfig)) {
+            $mailer->Host = $adapterConfig['host'];
         }
 
+        if (array_key_exists('port', $adapterConfig)) {
+            $mailer->Port = $adapterConfig['port'];
+        }
+
+        if (array_key_exists('smtpAuth', $adapterConfig)) {
+            $mailer->SMTPAuth = $adapterConfig['smtpAuth'];
+        }
+
+        if (array_key_exists('username', $adapterConfig)) {
+            $mailer->Username = $adapterConfig['username'];
+        }
+
+        if (array_key_exists('password', $adapterConfig)) {
+            $mailer->Password = $adapterConfig['password'];
+        }
+
+        if (array_key_exists('smtpSecure', $adapterConfig)) {
+            $mailer->SMTPSecure = $adapterConfig['smtpSecure'];
+        }
+
+        if (array_key_exists('charset', $adapterConfig)) {
+            $mailer->CharSet = $adapterConfig['charset'];
+        }
+
+        if (array_key_exists('encoding', $adapterConfig)) {
+            $mailer->Encoding = $adapterConfig['encoding'];
+        }
+
+        if (array_key_exists('timeout', $adapterConfig)) {
+            $mailer->Timeout = $adapterConfig['timeout'];
+        }
+
+        if (array_key_exists('from', $adapterConfig)) {
+            $mailer->setFrom($adapterConfig['from'], $adapterConfig['fromName'] ?? '');
+        }
+
+        // The adapter reports the transport's effective state, not the config it
+        // was handed — so consumers read what the mailer will actually use.
         return new PhpMailer(
             mailer          : $mailer,
             enableExceptions: $enableExceptions,
             charset         : $mailer->CharSet,
             encoding        : $mailer->Encoding,
-            from            : $from,
-            host            : $adapterConfig['host'] ?? '',
-            password        : $adapterConfig['password'] ?? '',
-            port            : $adapterConfig['port'] ?? 25,
-            smtpAuth        : $adapterConfig['smtp_auth'] ?? false,
-            smtpSecure      : $adapterConfig['smtp_secure'] ?? '',
+            from            : $mailer->From,
+            fromName        : $mailer->FromName,
+            host            : $mailer->Host,
+            password        : $mailer->Password,
+            port            : $mailer->Port,
+            smtpAuth        : $mailer->SMTPAuth,
+            smtpSecure      : $mailer->SMTPSecure,
             timeout         : $mailer->Timeout,
-            username        : $adapterConfig['username'] ?? '',
-            useSmtp         : $useSmtp,
+            username        : $mailer->Username,
+            useSmtp         : $adapterConfig['useSmtp'] ?? false,
         );
     }
 }

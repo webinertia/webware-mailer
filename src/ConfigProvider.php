@@ -21,24 +21,22 @@ use Webware\MessageBus\MessageBusInterface;
 /**
  * Adapter configuration shape.
  *
- * Every key is optional: the published defaults below are merged with the host's
- * own values, and the adapter factory applies a default for each key it does not
- * find. The typed adapter contract on `AdapterInterface` is what consumers read
- * once the adapter has been built from this section.
+ * Keys match the adapter's constructor parameter names.
  *
  * @type AdapterConfig = array{
  *   enableExceptions?: bool,
  *   useSmtp?: bool,
- *   host?: string,
- *   port?: int,
- *   smtp_auth?: bool,
+ *   host?: non-empty-string,
+ *   port?: int<1, 65535>,
+ *   smtpAuth?: bool,
  *   username?: string,
  *   password?: string,
- *   charset?: string,
- *   encoding?: string,
- *   timeout?: int,
- *   smtp_secure?: string,
- *   from?: string,
+ *   smtpSecure?: ''|'tls'|'ssl',
+ *   charset?: non-empty-string,
+ *   encoding?: non-empty-string,
+ *   timeout?: positive-int,
+ *   from?: non-empty-string,
+ *   fromName?: non-empty-string,
  * }
  */
 final readonly class ConfigProvider

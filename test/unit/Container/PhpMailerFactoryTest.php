@@ -43,32 +43,6 @@ final class PhpMailerFactoryTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function invokeAppliesSmtpDefaultsWhenKeysMissing(): void
-    {
-        $factory = new PhpMailerFactory();
-        $result  = $factory($this->makeContainer([
-            AdapterInterface::class => [
-                'useSmtp' => true,
-                'host'    => 'smtp.example.com',
-            ],
-        ]));
-
-        $base = $this->baseMailer($result);
-
-        $this->assertSame('smtp', $base->Mailer);
-        $this->assertSame(25, $base->Port);
-        $this->assertFalse($base->SMTPAuth);
-        $this->assertSame('UTF-8', $base->CharSet);
-        $this->assertSame('base64', $base->Encoding);
-    }
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws ReflectionException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
     public function invokeConfiguresSmtpWhenEnabled(): void
     {
         $factory = new PhpMailerFactory();
@@ -78,11 +52,11 @@ final class PhpMailerFactoryTest extends TestCase
                 'enableExceptions' => true,
                 'host'             => 'smtp.example.com',
                 'port'             => 587,
-                'smtp_auth'        => true,
+                'smtpAuth'         => true,
                 'username'         => 'user',
                 // @mago-expect lint:no-literal-password
-                'password'    => 'pass',
-                'smtp_secure' => 'tls',
+                'password'   => 'pass',
+                'smtpSecure' => 'tls',
             ],
         ]));
 
@@ -94,37 +68,7 @@ final class PhpMailerFactoryTest extends TestCase
         $this->assertSame('user', $base->Username);
         $this->assertSame('pass', $base->Password);
         $this->assertSame('tls', $base->SMTPSecure);
-        $this->assertSame(30, $base->Timeout);
-    }
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function invokeExposesTheConfigurationDefaultsOnTheAdapter(): void
-    {
-        $factory = new PhpMailerFactory();
-        $result  = $factory($this->makeContainer([
-            AdapterInterface::class => [
-                'useSmtp' => false,
-            ],
-        ]));
-
-        $this->assertTrue($result->enableExceptions);
-        $this->assertSame('UTF-8', $result->charset);
-        $this->assertSame('base64', $result->encoding);
-        $this->assertSame('', $result->from);
-        $this->assertSame('', $result->host);
-        $this->assertSame('', $result->password);
-        $this->assertSame(25, $result->port);
-        $this->assertFalse($result->smtpAuth);
-        $this->assertSame('', $result->smtpSecure);
-        $this->assertSame(30, $result->timeout);
-        $this->assertSame('', $result->username);
-        $this->assertFalse($result->useSmtp);
-        $this->assertSame('', $this->baseMailer($result)->From);
+        $this->assertSame(300, $base->Timeout);
     }
 
     /**
@@ -142,15 +86,16 @@ final class PhpMailerFactoryTest extends TestCase
                 'enableExceptions' => false,
                 'host'             => 'smtp.example.com',
                 'port'             => 587,
-                'smtp_auth'        => true,
+                'smtpAuth'         => true,
                 'username'         => 'user',
                 // @mago-expect lint:no-literal-password
-                'password'    => 'pass',
-                'charset'     => 'iso-8859-1',
-                'encoding'    => 'quoted-printable',
-                'timeout'     => 45,
-                'smtp_secure' => 'tls',
-                'from'        => 'from@example.com',
+                'password'   => 'pass',
+                'charset'    => 'iso-8859-1',
+                'encoding'   => 'quoted-printable',
+                'timeout'    => 45,
+                'smtpSecure' => 'tls',
+                'from'       => 'from@example.com',
+                'fromName'   => 'Example Sender',
             ],
         ]));
 
@@ -158,6 +103,7 @@ final class PhpMailerFactoryTest extends TestCase
         $this->assertSame('iso-8859-1', $result->charset);
         $this->assertSame('quoted-printable', $result->encoding);
         $this->assertSame('from@example.com', $result->from);
+        $this->assertSame('Example Sender', $result->fromName);
         $this->assertSame('smtp.example.com', $result->host);
         $this->assertSame('pass', $result->password);
         $this->assertSame(587, $result->port);
@@ -167,6 +113,38 @@ final class PhpMailerFactoryTest extends TestCase
         $this->assertSame('user', $result->username);
         $this->assertTrue($result->useSmtp);
         $this->assertSame('from@example.com', $this->baseMailer($result)->From);
+        $this->assertSame('Example Sender', $this->baseMailer($result)->FromName);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function invokeExposesTheTransportDefaultsOnTheAdapter(): void
+    {
+        $factory = new PhpMailerFactory();
+        $result  = $factory($this->makeContainer([
+            AdapterInterface::class => [
+                'useSmtp' => false,
+            ],
+        ]));
+
+        $this->assertTrue($result->enableExceptions);
+        $this->assertSame('iso-8859-1', $result->charset);
+        $this->assertSame('8bit', $result->encoding);
+        $this->assertSame('', $result->from);
+        $this->assertSame('', $result->fromName);
+        $this->assertSame('localhost', $result->host);
+        $this->assertSame('', $result->password);
+        $this->assertSame(25, $result->port);
+        $this->assertFalse($result->smtpAuth);
+        $this->assertSame('', $result->smtpSecure);
+        $this->assertSame(300, $result->timeout);
+        $this->assertSame('', $result->username);
+        $this->assertFalse($result->useSmtp);
+        $this->assertSame('', $this->baseMailer($result)->From);
     }
 
     /**
@@ -242,6 +220,54 @@ final class PhpMailerFactoryTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
+    public function invokeKeepsMailTransportWhenUseSmtpFlagMissing(): void
+    {
+        $factory = new PhpMailerFactory();
+        $result  = $factory($this->makeContainer([
+            AdapterInterface::class => [
+                'host' => 'smtp.example.com',
+            ],
+        ]));
+
+        $this->assertSame('mail', $this->baseMailer($result)->Mailer);
+        $this->assertSame('smtp.example.com', $this->baseMailer($result)->Host);
+        $this->assertFalse($result->useSmtp);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function invokeLeavesTransportDefaultsWhenKeysMissing(): void
+    {
+        $factory = new PhpMailerFactory();
+        $result  = $factory($this->makeContainer([
+            AdapterInterface::class => [
+                'useSmtp' => true,
+                'host'    => 'smtp.example.com',
+            ],
+        ]));
+
+        $base = $this->baseMailer($result);
+
+        $this->assertSame('smtp', $base->Mailer);
+        $this->assertSame(25, $base->Port);
+        $this->assertFalse($base->SMTPAuth);
+        $this->assertSame('iso-8859-1', $base->CharSet);
+        $this->assertSame('8bit', $base->Encoding);
+        $this->assertSame(300, $base->Timeout);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
     public function invokeReturnsPhpMailerWithDefaultExceptionsFlag(): void
     {
         $factory = new PhpMailerFactory();
@@ -253,25 +279,6 @@ final class PhpMailerFactoryTest extends TestCase
 
         $this->assertInstanceOf(PhpMailer::class, $result);
         $this->assertTrue($this->exceptionsFlag($this->baseMailer($result)));
-    }
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws ReflectionException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function invokeSkipsSmtpWhenUseSmtpFlagMissing(): void
-    {
-        $factory = new PhpMailerFactory();
-        $result  = $factory($this->makeContainer([
-            AdapterInterface::class => [
-                'host' => 'smtp.example.com',
-            ],
-        ]));
-
-        $this->assertSame('localhost', $this->baseMailer($result)->Host);
     }
 
     /**

@@ -78,7 +78,7 @@ final class SmtpSendIntegrationTest extends TestCase
             'enableExceptions' => true,
             'host'             => '127.0.0.1',
             'port'             => $port,
-            'smtp_auth'        => false,
+            'smtpAuth'         => false,
         ]);
 
         $adapter = $adapter->withTo('to@example.com')
@@ -95,7 +95,7 @@ final class SmtpSendIntegrationTest extends TestCase
         self::assertStringContainsString('To: to@example.com', $data);
         self::assertStringContainsString('From: from@example.com', $data);
         self::assertStringContainsString('Subject: Integration Subject', $data);
-        self::assertStringContainsString('SW50ZWdyYXRpb24gQm9keQ==', $data);
+        self::assertStringContainsString('Integration Body', $data);
     }
 
     /**
@@ -113,7 +113,7 @@ final class SmtpSendIntegrationTest extends TestCase
             'enableExceptions' => true,
             'host'             => '127.0.0.1',
             'port'             => $this->freePort(),
-            'smtp_auth'        => false,
+            'smtpAuth'         => false,
             'timeout'          => 2,
         ]);
 

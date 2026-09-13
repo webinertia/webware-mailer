@@ -34,6 +34,8 @@ interface AdapterInterface extends MessageInterface
 
     public string $from { get; }
 
+    public string $fromName { get; }
+
     public string $host { get; }
 
     public string $password { get; }

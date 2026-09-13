@@ -1,6 +1,6 @@
 # Configuration Reference
 
-`Webware\Mailer\ConfigProvider` publishes three configuration groups:
+`Webware\Mailer\ConfigProvider` publishes four configuration groups:
 
 | Key | Contents |
 |---|---|
@@ -20,41 +20,49 @@ use Webware\Mailer\Adapter\AdapterInterface;
 return [
     AdapterInterface::class => [
         'enableExceptions' => true,
-        'useSmtp'         => true,
-        'host'            => 'smtp.example.com',
-        'port'            => 587,
-        'smtp_auth'       => true,
-        'username'        => 'user',
-        'password'        => 'secret',
-        'charset'         => 'UTF-8',
-        'encoding'        => 'base64',
-        'timeout'         => 30,
-        'smtp_secure'     => 'tls',
-        'from'            => 'sender@example.com',
+        'useSmtp'          => true,
+        'host'             => 'smtp.example.com',
+        'port'             => 587,
+        'smtpAuth'         => true,
+        'username'         => 'user',
+        'password'         => 'secret',
+        'smtpSecure'       => 'tls',
+        'charset'          => 'UTF-8',
+        'encoding'         => 'base64',
+        'timeout'          => 30,
+        'from'             => 'sender@example.com',
+        'fromName'         => 'Example Sender',
     ],
 ];
 ```
 
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `enableExceptions` | `bool` | `true` | Pass exceptions from PHPMailer through to callers |
-| `useSmtp` | `bool` | `false` | Use SMTP transport; otherwise PHP `mail()` |
-| `host` | `string` | `''` | SMTP host (only used when `useSmtp` is `true`) |
-| `port` | `int` | `25` | SMTP port |
-| `smtp_auth` | `bool` | `false` | Enable SMTP authentication |
-| `username` | `string` | `''` | SMTP username |
-| `password` | `string` | `''` | SMTP password |
-| `charset` | `string` | `UTF-8` | Message character set |
-| `encoding` | `string` | `base64` | Content transfer encoding |
-| `timeout` | `int` | `30` | SMTP connection timeout in seconds |
-| `smtp_secure` | `string` | `''` | `tls` or `ssl`; empty for none |
-| `from` | `string` | `''` | Default sender address; applied to the adapter when not empty |
+| Key | Type | Description |
+|---|---|---|
+| `enableExceptions` | `bool` | Pass exceptions from the transport through to callers |
+| `useSmtp` | `bool` | Use SMTP transport; otherwise PHP `mail()` |
+| `host` | non-empty `string` | SMTP host |
+| `port` | `int<1, 65535>` | SMTP port |
+| `smtpAuth` | `bool` | Enable SMTP authentication |
+| `username` | `string` | SMTP username |
+| `password` | `string` | SMTP password |
+| `smtpSecure` | `''`, `'tls'` or `'ssl'` | SMTP encryption |
+| `charset` | non-empty `string` | Message character set |
+| `encoding` | non-empty `string` | Content transfer encoding |
+| `timeout` | `positive-int` | SMTP connection timeout in seconds |
+| `from` | non-empty `string` | Sender address |
+| `fromName` | non-empty `string` | Sender display name |
 
-The section is published as an `AdapterConfig` shape (see the `@type` alias on
-`ConfigProvider`), and every key is optional — the defaults above are applied by
-`Webware\Mailer\Container\PhpMailerFactory` for any key that is absent. Once the
-adapter is built, read the values from it as typed properties
-(`$adapter->host`, `$adapter->from`, ...) rather than from the raw array.
+The keys are the adapter's constructor parameter names and every one of them is
+optional. `ConfigProvider` publishes `enableExceptions` and `useSmtp`; the
+remaining keys are the host application's to supply. A key the merged
+configuration does not provide is not applied at all, so the transport's own
+default stays in force rather than one mailer invented for the host. The section
+is published as an `AdapterConfig` shape (see the `@type` alias on
+`ConfigProvider`).
+
+Once the adapter is built, read the values from it as typed properties
+(`$adapter->host`, `$adapter->from`, `$adapter->fromName`, ...) rather than from
+the raw array — the adapter reports the transport's effective state.
 
 If the `AdapterInterface` configuration entry is missing, not an array, or empty,
 creating the adapter throws `Laminas\ServiceManager\Exception\ServiceNotCreatedException`.
