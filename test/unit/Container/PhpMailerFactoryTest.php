@@ -100,6 +100,78 @@ final class PhpMailerFactoryTest extends TestCase
     /**
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function invokeExposesTheConfigurationDefaultsOnTheAdapter(): void
+    {
+        $factory = new PhpMailerFactory();
+        $result  = $factory($this->makeContainer([
+            AdapterInterface::class => [
+                'useSmtp' => false,
+            ],
+        ]));
+
+        $this->assertTrue($result->enableExceptions);
+        $this->assertSame('UTF-8', $result->charset);
+        $this->assertSame('base64', $result->encoding);
+        $this->assertSame('', $result->from);
+        $this->assertSame('', $result->host);
+        $this->assertSame('', $result->password);
+        $this->assertSame(25, $result->port);
+        $this->assertFalse($result->smtpAuth);
+        $this->assertSame('', $result->smtpSecure);
+        $this->assertSame(30, $result->timeout);
+        $this->assertSame('', $result->username);
+        $this->assertFalse($result->useSmtp);
+        $this->assertSame('', $this->baseMailer($result)->From);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function invokeExposesTheConfigurationOnTheAdapter(): void
+    {
+        $factory = new PhpMailerFactory();
+        $result  = $factory($this->makeContainer([
+            AdapterInterface::class => [
+                'useSmtp'          => true,
+                'enableExceptions' => false,
+                'host'             => 'smtp.example.com',
+                'port'             => 587,
+                'smtp_auth'        => true,
+                'username'         => 'user',
+                // @mago-expect lint:no-literal-password
+                'password'    => 'pass',
+                'charset'     => 'iso-8859-1',
+                'encoding'    => 'quoted-printable',
+                'timeout'     => 45,
+                'smtp_secure' => 'tls',
+                'from'        => 'from@example.com',
+            ],
+        ]));
+
+        $this->assertFalse($result->enableExceptions);
+        $this->assertSame('iso-8859-1', $result->charset);
+        $this->assertSame('quoted-printable', $result->encoding);
+        $this->assertSame('from@example.com', $result->from);
+        $this->assertSame('smtp.example.com', $result->host);
+        $this->assertSame('pass', $result->password);
+        $this->assertSame(587, $result->port);
+        $this->assertTrue($result->smtpAuth);
+        $this->assertSame('tls', $result->smtpSecure);
+        $this->assertSame(45, $result->timeout);
+        $this->assertSame('user', $result->username);
+        $this->assertTrue($result->useSmtp);
+        $this->assertSame('from@example.com', $this->baseMailer($result)->From);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      * @throws \PHPUnit\Exception
      */

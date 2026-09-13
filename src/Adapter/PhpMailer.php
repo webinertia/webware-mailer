@@ -17,118 +17,34 @@ namespace Webware\Mailer\Adapter;
 use Override;
 use PHPMailer\PHPMailer\Exception as MailerException;
 use PHPMailer\PHPMailer\PHPMailer as BaseMailer;
+use SensitiveParameter;
 
+/**
+ * PHPMailer adapter.
+ *
+ * The settings passed to the constructor are exposed as read-only properties and
+ * every message-building method returns a new instance over a cloned transport,
+ * so a configured adapter can be shared and reused without one send leaking into
+ * the next.
+ */
 final class PhpMailer implements AdapterInterface
 {
     public function __construct(
         private BaseMailer $mailer,
+        public private(set) bool $enableExceptions = true,
+        public private(set) string $charset = 'UTF-8',
+        public private(set) string $encoding = 'base64',
+        public private(set) string $from = '',
+        public private(set) string $host = '',
+        #[SensitiveParameter]
+        public private(set) string $password = '',
+        public private(set) int $port = 25,
+        public private(set) bool $smtpAuth = false,
+        public private(set) string $smtpSecure = '',
+        public private(set) int $timeout = 30,
+        public private(set) string $username = '',
+        public private(set) bool $useSmtp = false,
     ) {}
-
-    /**
-     * @throws MailerException
-     */
-    #[Override]
-    public function addHeader(string $name, string $value): self
-    {
-        $this->mailer->addCustomHeader($name, $value);
-
-        return $this;
-    }
-
-    #[Override]
-    public function altBody(string $altBody): self
-    {
-        $this->mailer->AltBody = $altBody;
-
-        return $this;
-    }
-
-    /**
-     * @throws MailerException
-     */
-    #[Override]
-    public function attach(string $path, string $name = '', string $mimeType = ''): self
-    {
-        $this->mailer->addAttachment($path, $name, encoding: 'base64', type: $mimeType);
-
-        return $this;
-    }
-
-    /**
-     * @throws MailerException
-     */
-    #[Override]
-    public function attachFromString(string $content, string $name, string $mimeType = ''): self
-    {
-        $this->mailer->addStringAttachment($content, $name, encoding: 'base64', type: $mimeType);
-
-        return $this;
-    }
-
-    /**
-     * @throws MailerException
-     */
-    #[Override]
-    public function bcc(string $email, string $name = ''): self
-    {
-        $this->mailer->addBCC($email, $name);
-
-        return $this;
-    }
-
-    #[Override]
-    public function body(string $body): self
-    {
-        $this->mailer->Body = $body;
-
-        return $this;
-    }
-
-    /**
-     * @throws MailerException
-     */
-    #[Override]
-    public function cc(string $email, string $name = ''): self
-    {
-        $this->mailer->addCC($email, $name);
-
-        return $this;
-    }
-
-    #[Override]
-    public function charset(string $charset): self
-    {
-        $this->mailer->CharSet = $charset;
-
-        return $this;
-    }
-
-    #[Override]
-    public function encoding(string $encoding): self
-    {
-        $this->mailer->Encoding = $encoding;
-
-        return $this;
-    }
-
-    /**
-     * @throws MailerException
-     */
-    #[Override]
-    public function from(string $email, string $name = ''): self
-    {
-        $this->mailer->setFrom($email, $name);
-
-        return $this;
-    }
-
-    #[Override]
-    public function isHtml(bool $flag = true): self
-    {
-        $this->mailer->isHTML($flag);
-
-        return $this;
-    }
 
     #[Override]
     public function isMail(): self
@@ -150,54 +66,170 @@ final class PhpMailer implements AdapterInterface
      * @throws MailerException
      */
     #[Override]
-    public function replyTo(string $email, string $name = ''): self
-    {
-        $this->mailer->addReplyTo($email, $name);
-
-        return $this;
-    }
-
-    #[Override]
-    public function reset(): self
-    {
-        $this->mailer->clearAddresses();
-        $this->mailer->clearCCs();
-        $this->mailer->clearBCCs();
-        $this->mailer->clearReplyTos();
-        $this->mailer->clearAttachments();
-        $this->mailer->clearCustomHeaders();
-        $this->mailer->Subject = '';
-        $this->mailer->Body    = '';
-        $this->mailer->AltBody = '';
-
-        return $this;
-    }
-
-    /**
-     * @throws MailerException
-     */
-    #[Override]
     public function send(): bool
     {
         return $this->mailer->send();
     }
 
     #[Override]
-    public function subject(string $subject): self
+    public function withAltBody(string $altBody): static
     {
-        $this->mailer->Subject = $subject;
+        $clone                  = $this->replicate();
+        $clone->mailer->AltBody = $altBody;
 
-        return $this;
+        return $clone;
     }
 
     /**
      * @throws MailerException
      */
     #[Override]
-    public function to(string $email, string $name = ''): self
+    public function withAttachment(string $path, string $name = '', string $mimeType = ''): static
     {
-        $this->mailer->addAddress($email, $name);
+        $clone = $this->replicate();
+        $clone->mailer->addAttachment($path, $name, encoding: 'base64', type: $mimeType);
 
-        return $this;
+        return $clone;
+    }
+
+    /**
+     * @throws MailerException
+     */
+    #[Override]
+    public function withAttachmentFromString(string $content, string $name, string $mimeType = ''): static
+    {
+        $clone = $this->replicate();
+        $clone->mailer->addStringAttachment($content, $name, encoding: 'base64', type: $mimeType);
+
+        return $clone;
+    }
+
+    /**
+     * @throws MailerException
+     */
+    #[Override]
+    public function withBcc(string $email, string $name = ''): static
+    {
+        $clone = $this->replicate();
+        $clone->mailer->addBCC($email, $name);
+
+        return $clone;
+    }
+
+    #[Override]
+    public function withBody(string $body): static
+    {
+        $clone               = $this->replicate();
+        $clone->mailer->Body = $body;
+
+        return $clone;
+    }
+
+    /**
+     * @throws MailerException
+     */
+    #[Override]
+    public function withCc(string $email, string $name = ''): static
+    {
+        $clone = $this->replicate();
+        $clone->mailer->addCC($email, $name);
+
+        return $clone;
+    }
+
+    #[Override]
+    public function withCharset(string $charset): static
+    {
+        $clone                  = $this->replicate();
+        $clone->mailer->CharSet = $charset;
+
+        return $clone;
+    }
+
+    #[Override]
+    public function withEncoding(string $encoding): static
+    {
+        $clone                   = $this->replicate();
+        $clone->mailer->Encoding = $encoding;
+
+        return $clone;
+    }
+
+    /**
+     * @throws MailerException
+     */
+    #[Override]
+    public function withFrom(string $email, string $name = ''): static
+    {
+        $clone = $this->replicate();
+        $clone->mailer->setFrom($email, $name);
+
+        return $clone;
+    }
+
+    /**
+     * @throws MailerException
+     */
+    #[Override]
+    public function withHeader(string $name, string $value): static
+    {
+        $clone = $this->replicate();
+        $clone->mailer->addCustomHeader($name, $value);
+
+        return $clone;
+    }
+
+    #[Override]
+    public function withHtml(bool $flag = true): static
+    {
+        $clone = $this->replicate();
+        $clone->mailer->isHTML($flag);
+
+        return $clone;
+    }
+
+    /**
+     * @throws MailerException
+     */
+    #[Override]
+    public function withReplyTo(string $email, string $name = ''): static
+    {
+        $clone = $this->replicate();
+        $clone->mailer->addReplyTo($email, $name);
+
+        return $clone;
+    }
+
+    #[Override]
+    public function withSubject(string $subject): static
+    {
+        $clone                  = $this->replicate();
+        $clone->mailer->Subject = $subject;
+
+        return $clone;
+    }
+
+    /**
+     * @throws MailerException
+     */
+    #[Override]
+    public function withTo(string $email, string $name = ''): static
+    {
+        $clone = $this->replicate();
+        $clone->mailer->addAddress($email, $name);
+
+        return $clone;
+    }
+
+    /**
+     * Clone the adapter over a cloned transport, so a change made through a
+     * `with*()` method cannot reach the instance the caller already holds.
+     */
+    private function replicate(): static
+    {
+        $clone         = clone $this;
+        $clone->mailer = clone $this->mailer;
+
+        return $clone;
     }
 }

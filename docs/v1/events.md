@@ -23,7 +23,7 @@ email-related events.
   `InvalidArgumentException` when the event is not a `MessageEvent`.
 
 ```php
-use Webware\Mailer\CommandBus\SendEmailCommand;
+use Webware\Mailer\Command\SendEmailCommand;
 use Webware\Mailer\Event\MessageEvent;
 
 $event = new MessageEvent();

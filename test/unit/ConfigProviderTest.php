@@ -21,16 +21,16 @@ use PHPUnit\Framework\TestCase;
 use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\Adapter\MessageInterface;
 use Webware\Mailer\Adapter\PhpMailer;
-use Webware\Mailer\CommandBus\SendEmailCommand;
-use Webware\Mailer\CommandBus\SendEmailCommandHandler;
-use Webware\Mailer\CommandBus\SendEmailCommandHandlerFactory;
+use Webware\Mailer\Command\SendEmailCommand;
+use Webware\Mailer\CommandHandler\Container\SendEmailCommandHandlerFactory;
+use Webware\Mailer\CommandHandler\SendEmailCommandHandler;
 use Webware\Mailer\ConfigProvider;
 use Webware\Mailer\Container\MailerFactory;
 use Webware\Mailer\Container\PhpMailerFactory;
+use Webware\Mailer\Http\Middleware\Container\MailerMiddlewareFactory;
+use Webware\Mailer\Http\Middleware\MailerMiddleware;
 use Webware\Mailer\Mailer;
 use Webware\Mailer\MailerInterface;
-use Webware\Mailer\Middleware\MailerMiddleware;
-use Webware\Mailer\Middleware\MailerMiddlewareFactory;
 use Webware\MessageBus\ConfigProvider as BusProvider;
 use Webware\MessageBus\MessageBusInterface;
 
@@ -40,7 +40,6 @@ use function dirname;
 #[CoversMethod(ConfigProvider::class, 'getAdapterConfig')]
 #[CoversMethod(ConfigProvider::class, 'getCommandMap')]
 #[CoversMethod(ConfigProvider::class, 'getDependencies')]
-#[CoversMethod(ConfigProvider::class, 'getMessageConfig')]
 #[CoversMethod(ConfigProvider::class, 'getTemplates')]
 #[CoversMethod(ConfigProvider::class, '__invoke')]
 final class ConfigProviderTest extends TestCase
@@ -60,6 +59,17 @@ final class ConfigProviderTest extends TestCase
             ],
             $provider->getAdapterConfig(),
         );
+    }
+
+    /**
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function getAdapterConfigReturnsThePublishedDefaults(): void
+    {
+        $provider = new ConfigProvider();
+
+        $this->assertSame(['enableExceptions' => true, 'useSmtp' => false], $provider->getAdapterConfig());
     }
 
     /**
@@ -105,17 +115,6 @@ final class ConfigProviderTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function getMessageConfigReturnsEmptyArray(): void
-    {
-        $provider = new ConfigProvider();
-
-        $this->assertSame([], $provider->getMessageConfig());
-    }
-
-    /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
     public function getTemplatesReturnsMailPath(): void
     {
         $provider = new ConfigProvider();
@@ -142,6 +141,6 @@ final class ConfigProviderTest extends TestCase
             $config[MessageBusInterface::class] ?? null,
         );
         $this->assertSame($provider->getAdapterConfig(), $config[AdapterInterface::class] ?? null);
-        $this->assertSame($provider->getMessageConfig(), $config[MessageInterface::class] ?? null);
+        $this->assertArrayNotHasKey(MessageInterface::class, $config);
     }
 }

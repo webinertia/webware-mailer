@@ -15,13 +15,35 @@ declare(strict_types=1);
 namespace Webware\Mailer;
 
 use Webware\Mailer\Adapter\AdapterInterface;
-use Webware\Mailer\Adapter\MessageInterface;
 use Webware\MessageBus\ConfigProvider as BusProvider;
 use Webware\MessageBus\MessageBusInterface;
 
+/**
+ * Adapter configuration shape.
+ *
+ * Every key is optional: the published defaults below are merged with the host's
+ * own values, and the adapter factory applies a default for each key it does not
+ * find. The typed adapter contract on `AdapterInterface` is what consumers read
+ * once the adapter has been built from this section.
+ *
+ * @type AdapterConfig = array{
+ *   enableExceptions?: bool,
+ *   useSmtp?: bool,
+ *   host?: string,
+ *   port?: int,
+ *   smtp_auth?: bool,
+ *   username?: string,
+ *   password?: string,
+ *   charset?: string,
+ *   encoding?: string,
+ *   timeout?: int,
+ *   smtp_secure?: string,
+ *   from?: string,
+ * }
+ */
 final readonly class ConfigProvider
 {
-    /** @return array<string, mixed> */
+    /** @return AdapterConfig */
     public function getAdapterConfig(): array
     {
         return [
@@ -34,7 +56,7 @@ final readonly class ConfigProvider
     public function getCommandMap(): array
     {
         return [
-            CommandBus\SendEmailCommand::class => CommandBus\SendEmailCommandHandler::class,
+            Command\SendEmailCommand::class => CommandHandler\SendEmailCommandHandler::class,
         ];
     }
 
@@ -47,18 +69,12 @@ final readonly class ConfigProvider
                 MailerInterface::class => Mailer::class,
             ],
             'factories' => [
-                Adapter\PhpMailer::class                  => Container\PhpMailerFactory::class,
-                CommandBus\SendEmailCommandHandler::class => CommandBus\SendEmailCommandHandlerFactory::class,
-                Mailer::class                             => Container\MailerFactory::class,
-                Middleware\MailerMiddleware::class        => Middleware\MailerMiddlewareFactory::class,
+                Adapter\PhpMailer::class                      => Container\PhpMailerFactory::class,
+                CommandHandler\SendEmailCommandHandler::class => CommandHandler\Container\SendEmailCommandHandlerFactory::class,
+                Mailer::class                                 => Container\MailerFactory::class,
+                Http\Middleware\MailerMiddleware::class       => Http\Middleware\Container\MailerMiddlewareFactory::class,
             ],
         ];
-    }
-
-    /** @return array<string, mixed> */
-    public function getMessageConfig(): array
-    {
-        return [];
     }
 
     /** @return array<string, mixed> */
@@ -81,7 +97,6 @@ final readonly class ConfigProvider
                 BusProvider::COMMAND_MAP_KEY => $this->getCommandMap(),
             ],
             AdapterInterface::class    => $this->getAdapterConfig(),
-            MessageInterface::class    => $this->getMessageConfig(),
         ];
     }
 }

@@ -12,14 +12,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace WebwareTest\Mailer\CommandBus;
+namespace WebwareTest\Mailer\Command;
 
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Webware\Mailer\CommandBus\SendEmailCommand;
+use Webware\Mailer\Command\SendEmailCommand;
 use Webware\Mailer\Event\MessageEvent;
 use Webware\MessageBus\Event\Event;
 

@@ -48,10 +48,10 @@ use const PHP_BINARY;
 #[CoversClass(PhpMailerFactory::class)]
 #[CoversMethod(PhpMailerFactory::class, '__invoke')]
 #[CoversClass(PhpMailer::class)]
-#[CoversMethod(PhpMailer::class, 'to')]
-#[CoversMethod(PhpMailer::class, 'from')]
-#[CoversMethod(PhpMailer::class, 'subject')]
-#[CoversMethod(PhpMailer::class, 'body')]
+#[CoversMethod(PhpMailer::class, 'withTo')]
+#[CoversMethod(PhpMailer::class, 'withFrom')]
+#[CoversMethod(PhpMailer::class, 'withSubject')]
+#[CoversMethod(PhpMailer::class, 'withBody')]
 #[CoversMethod(PhpMailer::class, 'send')]
 #[CoversClass(Mailer::class)]
 #[CoversMethod(Mailer::class, 'send')]
@@ -81,10 +81,10 @@ final class SmtpSendIntegrationTest extends TestCase
             'smtp_auth'        => false,
         ]);
 
-        $adapter->to('to@example.com')
-            ->from('from@example.com')
-            ->subject('Integration Subject')
-            ->body('Integration Body');
+        $adapter = $adapter->withTo('to@example.com')
+            ->withFrom('from@example.com')
+            ->withSubject('Integration Subject')
+            ->withBody('Integration Body');
 
         $mailer = new Mailer($adapter);
 

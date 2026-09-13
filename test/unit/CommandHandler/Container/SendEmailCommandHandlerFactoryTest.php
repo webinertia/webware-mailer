@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace WebwareTest\Mailer\CommandBus;
+namespace WebwareTest\Mailer\CommandHandler\Container;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -21,8 +21,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use Webware\Mailer\CommandBus\SendEmailCommandHandler;
-use Webware\Mailer\CommandBus\SendEmailCommandHandlerFactory;
+use Webware\Mailer\CommandHandler\Container\SendEmailCommandHandlerFactory;
+use Webware\Mailer\CommandHandler\SendEmailCommandHandler;
 use Webware\Mailer\MailerInterface;
 
 #[CoversClass(SendEmailCommandHandlerFactory::class)]
