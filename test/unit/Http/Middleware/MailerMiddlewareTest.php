@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace WebwareTest\Mailer\Middleware;
+namespace WebwareTest\Mailer\Http\Middleware;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -22,9 +22,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Webware\Mailer\Adapter\AdapterInterface;
+use Webware\Mailer\Http\Middleware\MailerMiddleware;
 use Webware\Mailer\Mailer;
 use Webware\Mailer\MailerInterface;
-use Webware\Mailer\Middleware\MailerMiddleware;
 
 #[CoversClass(MailerMiddleware::class)]
 #[CoversMethod(MailerMiddleware::class, 'process')]

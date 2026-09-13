@@ -70,8 +70,8 @@ Templates are registered under the `templates` key:
 `SendEmailCommand` is mapped to `SendEmailCommandHandler` automatically:
 
 ```php
-use Webware\Mailer\CommandBus\SendEmailCommand;
-use Webware\Mailer\CommandBus\SendEmailCommandHandler;
+use Webware\Mailer\Command\SendEmailCommand;
+use Webware\Mailer\CommandHandler\SendEmailCommandHandler;
 use Webware\MessageBus\ConfigProvider as BusProvider;
 use Webware\MessageBus\MessageBusInterface;
 

@@ -12,10 +12,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Webware\Mailer\CommandBus;
+namespace Webware\Mailer\CommandHandler;
 
 use Exception;
 use RuntimeException;
+use Webware\Mailer\Command\SendEmailCommand;
 use Webware\Mailer\MailerInterface;
 use Webware\MessageBus\Command\CommandInterface;
 use Webware\MessageBus\Command\CommandResult;

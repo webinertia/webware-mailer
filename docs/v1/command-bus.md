@@ -1,7 +1,7 @@
 # Command Bus Integration
 
 The package provides a `webware/message-bus` command for sending email:
-`Webware\Mailer\CommandBus\SendEmailCommand`. Its handler composes the message
+`Webware\Mailer\Command\SendEmailCommand`. Its handler composes the message
 on the configured adapter and sends it.
 
 ## Mapping
@@ -9,8 +9,8 @@ on the configured adapter and sends it.
 `ConfigProvider` registers the command map automatically:
 
 ```php
-use Webware\Mailer\CommandBus\SendEmailCommand;
-use Webware\Mailer\CommandBus\SendEmailCommandHandler;
+use Webware\Mailer\Command\SendEmailCommand;
+use Webware\Mailer\CommandHandler\SendEmailCommandHandler;
 use Webware\MessageBus\MessageBusInterface;
 
 $commandMap = [
@@ -22,7 +22,7 @@ $commandMap = [
 ## Sending Email
 
 ```php
-use Webware\Mailer\CommandBus\SendEmailCommand;
+use Webware\Mailer\Command\SendEmailCommand;
 use Webware\Mailer\Event\MessageEvent;
 use Webware\MessageBus\MessageBusInterface;
 

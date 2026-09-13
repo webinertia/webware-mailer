@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace WebwareTest\Mailer\Middleware;
+namespace WebwareTest\Mailer\Http\Middleware\Container;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -24,9 +24,9 @@ use Psr\Container\NotFoundExceptionInterface;
 use RuntimeException;
 use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\ConfigProvider;
+use Webware\Mailer\Http\Middleware\Container\MailerMiddlewareFactory;
+use Webware\Mailer\Http\Middleware\MailerMiddleware;
 use Webware\Mailer\MailerInterface;
-use Webware\Mailer\Middleware\MailerMiddleware;
-use Webware\Mailer\Middleware\MailerMiddlewareFactory;
 
 #[CoversClass(MailerMiddlewareFactory::class)]
 #[CoversMethod(MailerMiddlewareFactory::class, '__invoke')]

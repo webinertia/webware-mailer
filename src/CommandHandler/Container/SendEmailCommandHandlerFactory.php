@@ -12,11 +12,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Webware\Mailer\CommandBus;
+namespace Webware\Mailer\CommandHandler\Container;
 
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Webware\Mailer\CommandHandler\SendEmailCommandHandler;
 use Webware\Mailer\MailerInterface;
 
 final class SendEmailCommandHandlerFactory

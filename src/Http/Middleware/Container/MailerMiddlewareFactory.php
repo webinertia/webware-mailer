@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Webware\Mailer\Middleware;
+namespace Webware\Mailer\Http\Middleware\Container;
 
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
@@ -20,6 +20,7 @@ use Psr\Container\NotFoundExceptionInterface;
 use RuntimeException;
 use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\ConfigProvider;
+use Webware\Mailer\Http\Middleware\MailerMiddleware;
 use Webware\Mailer\MailerInterface;
 
 use function is_array;

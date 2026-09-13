@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Webware\Mailer\Middleware;
+namespace Webware\Mailer\Http\Middleware;
 
 use Override;
 use Psr\Http\Message\ResponseInterface;

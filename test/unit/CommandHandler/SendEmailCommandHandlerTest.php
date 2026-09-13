@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace WebwareTest\Mailer\CommandBus;
+namespace WebwareTest\Mailer\CommandHandler;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -20,8 +20,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Webware\Mailer\Adapter\AdapterInterface;
-use Webware\Mailer\CommandBus\SendEmailCommand;
-use Webware\Mailer\CommandBus\SendEmailCommandHandler;
+use Webware\Mailer\Command\SendEmailCommand;
+use Webware\Mailer\CommandHandler\SendEmailCommandHandler;
 use Webware\Mailer\Event\MessageEvent;
 use Webware\Mailer\MailerInterface;
 use Webware\MessageBus\Command\CommandResultInterface;

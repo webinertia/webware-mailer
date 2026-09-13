@@ -1,6 +1,6 @@
 # Middleware
 
-`Webware\Mailer\Middleware\MailerMiddleware` prepares the adapter during a
+`Webware\Mailer\Http\Middleware\MailerMiddleware` prepares the adapter during a
 request: it sets the configured sender address and attaches the `Mailer` to
 the request as an attribute.
 
@@ -25,7 +25,7 @@ Pipe the middleware:
 
 ```php
 // config/pipeline.php
-$app->pipe(\Webware\Mailer\Middleware\MailerMiddleware::class);
+$app->pipe(\Webware\Mailer\Http\Middleware\MailerMiddleware::class);
 ```
 
 ## Behavior

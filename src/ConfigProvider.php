@@ -34,7 +34,7 @@ final readonly class ConfigProvider
     public function getCommandMap(): array
     {
         return [
-            CommandBus\SendEmailCommand::class => CommandBus\SendEmailCommandHandler::class,
+            Command\SendEmailCommand::class => CommandHandler\SendEmailCommandHandler::class,
         ];
     }
 
@@ -47,10 +47,10 @@ final readonly class ConfigProvider
                 MailerInterface::class => Mailer::class,
             ],
             'factories' => [
-                Adapter\PhpMailer::class                  => Container\PhpMailerFactory::class,
-                CommandBus\SendEmailCommandHandler::class => CommandBus\SendEmailCommandHandlerFactory::class,
-                Mailer::class                             => Container\MailerFactory::class,
-                Middleware\MailerMiddleware::class        => Middleware\MailerMiddlewareFactory::class,
+                Adapter\PhpMailer::class                      => Container\PhpMailerFactory::class,
+                CommandHandler\SendEmailCommandHandler::class => CommandHandler\Container\SendEmailCommandHandlerFactory::class,
+                Mailer::class                                 => Container\MailerFactory::class,
+                Http\Middleware\MailerMiddleware::class       => Http\Middleware\Container\MailerMiddlewareFactory::class,
             ],
         ];
     }

@@ -12,24 +12,29 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Webware\Mailer\CommandBus;
+namespace Webware\Mailer\Command;
 
 use InvalidArgumentException;
 use Override;
 use Webware\Mailer\Event\MessageEvent;
-use Webware\MessageBus\Command\CommandInterface;
+use Webware\MessageBus\Command\NamedCommandInterface;
+use Webware\MessageBus\Command\NamedCommandTrait;
 use Webware\MessageBus\Event\EventAwareInterface;
 use Webware\MessageBus\Event\EventInterface;
 
-final class SendEmailCommand implements CommandInterface, EventAwareInterface
+final class SendEmailCommand implements NamedCommandInterface, EventAwareInterface
 {
+    use NamedCommandTrait;
+
     public function __construct(
         private string $to,
         private string $from,
         private string $subject,
         private string $body,
         private MessageEvent $event,
-    ) {}
+    ) {
+        $this->name = self::class;
+    }
 
     public function getBody(): string
     {
