@@ -63,6 +63,7 @@ final class PhpMailerTest extends TestCase
             charset         : 'iso-8859-1',
             encoding        : 'quoted-printable',
             from            : 'from@example.com',
+            fromName        : 'Example Sender',
             host            : 'smtp.example.com',
             password        : bin2hex(random_bytes(16)),
             port            : 587,
@@ -77,6 +78,7 @@ final class PhpMailerTest extends TestCase
         $this->assertSame('iso-8859-1', $adapter->charset);
         $this->assertSame('quoted-printable', $adapter->encoding);
         $this->assertSame('from@example.com', $adapter->from);
+        $this->assertSame('Example Sender', $adapter->fromName);
         $this->assertSame('smtp.example.com', $adapter->host);
         $this->assertNotSame('', $adapter->password);
         $this->assertSame(587, $adapter->port);
@@ -91,20 +93,21 @@ final class PhpMailerTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function defaultsAreAppliedWhenOnlyTheTransportIsGiven(): void
+    public function defaultsMirrorTheTransportWhenOnlyTheTransportIsGiven(): void
     {
         $adapter = new PhpMailer(new BaseMailer());
 
         $this->assertTrue($adapter->enableExceptions);
-        $this->assertSame('UTF-8', $adapter->charset);
-        $this->assertSame('base64', $adapter->encoding);
+        $this->assertSame('iso-8859-1', $adapter->charset);
+        $this->assertSame('8bit', $adapter->encoding);
         $this->assertSame('', $adapter->from);
-        $this->assertSame('', $adapter->host);
+        $this->assertSame('', $adapter->fromName);
+        $this->assertSame('localhost', $adapter->host);
         $this->assertSame('', $adapter->password);
         $this->assertSame(25, $adapter->port);
         $this->assertFalse($adapter->smtpAuth);
         $this->assertSame('', $adapter->smtpSecure);
-        $this->assertSame(30, $adapter->timeout);
+        $this->assertSame(300, $adapter->timeout);
         $this->assertSame('', $adapter->username);
         $this->assertFalse($adapter->useSmtp);
     }

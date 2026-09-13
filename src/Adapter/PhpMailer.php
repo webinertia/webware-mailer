@@ -32,16 +32,17 @@ final class PhpMailer implements AdapterInterface
     public function __construct(
         private BaseMailer $mailer,
         public private(set) bool $enableExceptions = true,
-        public private(set) string $charset = 'UTF-8',
-        public private(set) string $encoding = 'base64',
+        public private(set) string $charset = 'iso-8859-1',
+        public private(set) string $encoding = '8bit',
         public private(set) string $from = '',
-        public private(set) string $host = '',
+        public private(set) string $fromName = '',
+        public private(set) string $host = 'localhost',
         #[SensitiveParameter]
         public private(set) string $password = '',
         public private(set) int $port = 25,
         public private(set) bool $smtpAuth = false,
         public private(set) string $smtpSecure = '',
-        public private(set) int $timeout = 30,
+        public private(set) int $timeout = 300,
         public private(set) string $username = '',
         public private(set) bool $useSmtp = false,
     ) {}
