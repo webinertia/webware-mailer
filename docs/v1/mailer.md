@@ -34,11 +34,12 @@ $mailer = $container->get(MailerInterface::class);
 $adapter = $mailer->getAdapter();
 
 if (null !== $adapter) {
-    $adapter->to('recipient@example.com')
-        ->from('sender@example.com')
-        ->subject('Hello')
-        ->body('Message body');
+    $adapter = $adapter->withTo('recipient@example.com')
+        ->withFrom('sender@example.com')
+        ->withSubject('Hello')
+        ->withBody('Message body');
 
+    $mailer->setAdapter($adapter);
     $mailer->send();
 }
 ```
@@ -64,9 +65,10 @@ final class OrderNotificationService implements MailerAwareInterface
             return;
         }
 
-        $adapter->to('customer@example.com')
-            ->subject('Order confirmed');
+        $adapter = $adapter->withTo('customer@example.com')
+            ->withSubject('Order confirmed');
 
+        $this->getMailer()->setAdapter($adapter);
         $this->getMailer()->send();
     }
 }

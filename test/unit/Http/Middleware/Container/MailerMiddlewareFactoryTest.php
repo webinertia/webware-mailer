@@ -21,9 +21,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use RuntimeException;
-use Webware\Mailer\Adapter\AdapterInterface;
-use Webware\Mailer\ConfigProvider;
+use ReflectionProperty;
 use Webware\Mailer\Http\Middleware\Container\MailerMiddlewareFactory;
 use Webware\Mailer\Http\Middleware\MailerMiddleware;
 use Webware\Mailer\MailerInterface;
@@ -35,110 +33,24 @@ final class MailerMiddlewareFactoryTest extends TestCase
     /**
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
-     * @throws RuntimeException
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function invokeReturnsMailerMiddleware(): void
+    public function invokeBuildsTheMiddlewareFromTheMailerService(): void
     {
         $mailer    = $this->createStub(MailerInterface::class);
-        $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')
-            ->willReturnCallback(
-                static function (string $id) use ($mailer): mixed {
-                    if (MailerInterface::class === $id) {
-                        return $mailer;
-                    }
+        $container = $this->createMock(ContainerInterface::class);
+        $container->expects($this->once())
+            ->method('get')
+            ->with(MailerInterface::class)
+            ->willReturn($mailer);
 
-                    if ('config' === $id) {
-                        return [
-                            ConfigProvider::class => [
-                                AdapterInterface::class => [
-                                    'from' => 'sender@example.com',
-                                ],
-                            ],
-                        ];
-                    }
+        $middleware = (new MailerMiddlewareFactory())($container);
 
-                    return null;
-                },
-            );
-
-        $factory = new MailerMiddlewareFactory();
-        $result  = $factory($container);
-
-        $this->assertInstanceOf(MailerMiddleware::class, $result);
-    }
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws RuntimeException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function invokeThrowsWhenAdapterSettingsMissing(): void
-    {
-        $mailer    = $this->createStub(MailerInterface::class);
-        $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')
-            ->willReturnCallback(
-                static function (string $id) use ($mailer): mixed {
-                    if (MailerInterface::class === $id) {
-                        return $mailer;
-                    }
-
-                    if ('config' === $id) {
-                        return [
-                            ConfigProvider::class => [],
-                        ];
-                    }
-
-                    return null;
-                },
-            );
-
-        $factory = new MailerMiddlewareFactory();
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageIs('Service: ' . AdapterInterface::class . ' configuration must be an array.');
-
-        $factory($container);
-    }
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws RuntimeException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function invokeThrowsWhenMailerConfigIsNotArray(): void
-    {
-        $mailer    = $this->createStub(MailerInterface::class);
-        $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')
-            ->willReturnCallback(
-                static function (string $id) use ($mailer): mixed {
-                    if (MailerInterface::class === $id) {
-                        return $mailer;
-                    }
-
-                    if ('config' === $id) {
-                        return [
-                            ConfigProvider::class => 'not-an-array',
-                        ];
-                    }
-
-                    return null;
-                },
-            );
-
-        $factory = new MailerMiddlewareFactory();
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageIs('Service: ' . ConfigProvider::class . ' configuration must be an array.');
-
-        $factory($container);
+        $this->assertInstanceOf(MailerMiddleware::class, $middleware);
+        $this->assertSame(
+            $mailer,
+            new ReflectionProperty(MailerMiddleware::class, 'mailer')->getValue($middleware),
+        );
     }
 }

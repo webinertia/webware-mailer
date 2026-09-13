@@ -40,7 +40,6 @@ use function dirname;
 #[CoversMethod(ConfigProvider::class, 'getAdapterConfig')]
 #[CoversMethod(ConfigProvider::class, 'getCommandMap')]
 #[CoversMethod(ConfigProvider::class, 'getDependencies')]
-#[CoversMethod(ConfigProvider::class, 'getMessageConfig')]
 #[CoversMethod(ConfigProvider::class, 'getTemplates')]
 #[CoversMethod(ConfigProvider::class, '__invoke')]
 final class ConfigProviderTest extends TestCase
@@ -60,6 +59,17 @@ final class ConfigProviderTest extends TestCase
             ],
             $provider->getAdapterConfig(),
         );
+    }
+
+    /**
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function getAdapterConfigReturnsThePublishedDefaults(): void
+    {
+        $provider = new ConfigProvider();
+
+        $this->assertSame(['enableExceptions' => true, 'useSmtp' => false], $provider->getAdapterConfig());
     }
 
     /**
@@ -105,17 +115,6 @@ final class ConfigProviderTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function getMessageConfigReturnsEmptyArray(): void
-    {
-        $provider = new ConfigProvider();
-
-        $this->assertSame([], $provider->getMessageConfig());
-    }
-
-    /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
     public function getTemplatesReturnsMailPath(): void
     {
         $provider = new ConfigProvider();
@@ -142,6 +141,6 @@ final class ConfigProviderTest extends TestCase
             $config[MessageBusInterface::class] ?? null,
         );
         $this->assertSame($provider->getAdapterConfig(), $config[AdapterInterface::class] ?? null);
-        $this->assertSame($provider->getMessageConfig(), $config[MessageInterface::class] ?? null);
+        $this->assertArrayNotHasKey(MessageInterface::class, $config);
     }
 }

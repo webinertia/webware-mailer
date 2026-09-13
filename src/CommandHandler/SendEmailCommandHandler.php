@@ -40,10 +40,13 @@ final readonly class SendEmailCommandHandler implements CommandHandlerInterface
             if (null === $adapter) {
                 throw new RuntimeException('No adapter configured on Mailer instance.');
             }
-            $adapter->to($command->getTo())
-                ->from($command->getFrom())
-                ->subject($command->getSubject())
-                ->body($command->getBody());
+
+            $this->mailer->setAdapter(
+                $adapter->withTo($command->getTo())
+                    ->withFrom($command->getFrom())
+                    ->withSubject($command->getSubject())
+                    ->withBody($command->getBody()),
+            );
             $this->mailer->send();
         } catch (Exception $e) { // track down the specific exception thrown by the mailer adapter and catch that instead of Exception
             return new CommandResult(

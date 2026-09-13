@@ -14,36 +14,39 @@ declare(strict_types=1);
 
 namespace Webware\Mailer\Adapter;
 
-/** @api */
+/**
+ * Message-building surface. Every method returns a new instance, so a partially
+ * configured message can be shared without one caller's changes reaching another.
+ *
+ * @api
+ */
 interface MessageInterface
 {
-    public function addHeader(string $name, string $value): self;
+    public function withAltBody(string $altBody): static;
 
-    public function altBody(string $altBody): self;
+    public function withAttachment(string $path, string $name = '', string $mimeType = ''): static;
 
-    public function attach(string $path, string $name = '', string $mimeType = ''): self;
+    public function withAttachmentFromString(string $content, string $name, string $mimeType = ''): static;
 
-    public function attachFromString(string $content, string $name, string $mimeType = ''): self;
+    public function withBcc(string $email, string $name = ''): static;
 
-    public function bcc(string $email, string $name = ''): self;
+    public function withBody(string $body): static;
 
-    public function body(string $body): self;
+    public function withCc(string $email, string $name = ''): static;
 
-    public function cc(string $email, string $name = ''): self;
+    public function withCharset(string $charset): static;
 
-    public function charset(string $charset): self;
+    public function withEncoding(string $encoding): static;
 
-    public function encoding(string $encoding): self;
+    public function withFrom(string $email, string $name = ''): static;
 
-    public function from(string $email, string $name = ''): self;
+    public function withHeader(string $name, string $value): static;
 
-    public function isHtml(bool $flag = true): self;
+    public function withHtml(bool $flag = true): static;
 
-    public function replyTo(string $email, string $name = ''): self;
+    public function withReplyTo(string $email, string $name = ''): static;
 
-    public function reset(): self;
+    public function withSubject(string $subject): static;
 
-    public function subject(string $subject): self;
-
-    public function to(string $email, string $name = ''): self;
+    public function withTo(string $email, string $name = ''): static;
 }

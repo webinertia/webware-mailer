@@ -15,54 +15,83 @@ declare(strict_types=1);
 namespace Webware\Mailer\Container;
 
 use Laminas\ServiceManager\Exception\ServiceNotCreatedException;
+use PHPMailer\PHPMailer\Exception as MailerException;
 use PHPMailer\PHPMailer\PHPMailer as BaseMailer;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\Adapter\PhpMailer;
+use Webware\Mailer\ConfigProvider;
 
+use function is_array;
+
+/**
+ * @import-type AdapterConfig from ConfigProvider
+ */
 final class PhpMailerFactory
 {
     /**
-     * @param array<string, mixed> $adapterConfig
-     */
-    private function configureSmtp(BaseMailer $mailer, array $adapterConfig): void
-    {
-        $mailer->isSMTP();
-        $mailer->Host       = (string) ($adapterConfig['host'] ?? '');
-        $mailer->Port       = (int) ($adapterConfig['port'] ?? 25);
-        $mailer->SMTPAuth   = ($adapterConfig['smtp_auth'] ?? false) === true;
-        $mailer->Username   = (string) ($adapterConfig['username'] ?? '');
-        $mailer->Password   = (string) ($adapterConfig['password'] ?? '');
-        $mailer->CharSet    = (string) ($adapterConfig['charset'] ?? 'UTF-8');
-        $mailer->Encoding   = (string) ($adapterConfig['encoding'] ?? 'base64');
-        $mailer->Timeout    = (int) ($adapterConfig['timeout'] ?? 30);
-        $mailer->SMTPSecure = (string) ($adapterConfig['smtp_secure'] ?? '');
-    }
-
-    /**
      * @throws ContainerExceptionInterface
+     * @throws MailerException
      * @throws NotFoundExceptionInterface
      * @throws ServiceNotCreatedException
      */
     public function __invoke(ContainerInterface $container): AdapterInterface&PhpMailer
     {
-        /** @var array<string, mixed> $adapterConfig */
-        $adapterConfig = $container->get('config')[AdapterInterface::class] ?? [];
+        /** @var array<string, mixed> $appConfig */
+        $appConfig = $container->get('config');
 
-        if ([] === $adapterConfig) {
+        /** @var mixed $candidate */
+        $candidate = $appConfig[AdapterInterface::class] ?? null;
+
+        if (! is_array($candidate) || [] === $candidate) {
             throw new ServiceNotCreatedException(
                 'Service: ' . PhpMailer::class . ' could not be created. Missing configuration.',
             );
         }
 
-        $mailer = new BaseMailer(($adapterConfig['enableExceptions'] ?? true) === true);
+        /** @var AdapterConfig $adapterConfig */
+        $adapterConfig = $candidate;
 
-        if (($adapterConfig['useSmtp'] ?? false) === true) {
-            $this->configureSmtp($mailer, $adapterConfig);
+        $enableExceptions = $adapterConfig['enableExceptions'] ?? true;
+        $useSmtp          = $adapterConfig['useSmtp'] ?? false;
+        $from             = $adapterConfig['from'] ?? '';
+
+        $mailer = new BaseMailer($enableExceptions);
+
+        if ($useSmtp) {
+            $mailer->isSMTP();
+            $mailer->Host       = $adapterConfig['host'] ?? '';
+            $mailer->Port       = $adapterConfig['port'] ?? 25;
+            $mailer->SMTPAuth   = $adapterConfig['smtp_auth'] ?? false;
+            $mailer->Username   = $adapterConfig['username'] ?? '';
+            $mailer->Password   = $adapterConfig['password'] ?? '';
+            $mailer->SMTPSecure = $adapterConfig['smtp_secure'] ?? '';
         }
 
-        return new PhpMailer($mailer);
+        $mailer->CharSet  = $adapterConfig['charset'] ?? 'UTF-8';
+        $mailer->Encoding = $adapterConfig['encoding'] ?? 'base64';
+        $mailer->Timeout  = $adapterConfig['timeout'] ?? 30;
+
+        if ('' !== $from) {
+            $mailer->setFrom($from);
+        }
+
+        return new PhpMailer(
+            mailer          : $mailer,
+            enableExceptions: $enableExceptions,
+            charset         : $mailer->CharSet,
+            encoding        : $mailer->Encoding,
+            from            : $from,
+            host            : $adapterConfig['host'] ?? '',
+            password        : $adapterConfig['password'] ?? '',
+            port            : $adapterConfig['port'] ?? 25,
+            smtpAuth        : $adapterConfig['smtp_auth'] ?? false,
+            smtpSecure      : $adapterConfig['smtp_secure'] ?? '',
+            timeout         : $mailer->Timeout,
+            username        : $adapterConfig['username'] ?? '',
+            useSmtp         : $useSmtp,
+        );
     }
 }

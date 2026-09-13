@@ -14,9 +14,42 @@ declare(strict_types=1);
 
 namespace Webware\Mailer\Adapter;
 
-/** @api */
+/**
+ * Adapter contract.
+ *
+ * The settings the adapter was configured with are exposed as read-only
+ * properties, so consumers read typed values instead of raw configuration
+ * arrays. Implementations are free to publish additional optional properties of
+ * their own, but the ones declared here are the minimum an implementation needs.
+ *
+ * @api
+ */
 interface AdapterInterface extends MessageInterface
 {
+    public bool $enableExceptions { get; }
+
+    public string $charset { get; }
+
+    public string $encoding { get; }
+
+    public string $from { get; }
+
+    public string $host { get; }
+
+    public string $password { get; }
+
+    public int $port { get; }
+
+    public bool $smtpAuth { get; }
+
+    public string $smtpSecure { get; }
+
+    public int $timeout { get; }
+
+    public string $username { get; }
+
+    public bool $useSmtp { get; }
+
     public function isMail(): self;
 
     public function isSmtp(): self;

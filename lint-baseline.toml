@@ -1,9 +1,9 @@
 variant = "loose"
 
 [[issues]]
-file = "src/Adapter/MessageInterface.php"
-code = "too-many-methods"
-message = "Interface has too many methods."
+file = "src/Adapter/AdapterInterface.php"
+code = "too-many-properties"
+message = "Interface has too many properties."
 count = 1
 
 [[issues]]
@@ -13,7 +13,25 @@ message = "Avoid boolean flag parameters."
 count = 1
 
 [[issues]]
+file = "src/Adapter/MessageInterface.php"
+code = "too-many-methods"
+message = "Interface has too many methods."
+count = 1
+
+[[issues]]
+file = "src/Adapter/PhpMailer.php"
+code = "excessive-parameter-list"
+message = "Parameter list is too long."
+count = 1
+
+[[issues]]
 file = "src/Adapter/PhpMailer.php"
 code = "too-many-methods"
 message = "Class has too many methods."
+count = 1
+
+[[issues]]
+file = "src/Container/PhpMailerFactory.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
 count = 1

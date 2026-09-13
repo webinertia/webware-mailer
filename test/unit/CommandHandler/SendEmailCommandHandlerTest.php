@@ -57,10 +57,10 @@ final class SendEmailCommandHandlerTest extends TestCase
     {
         $command = $this->makeCommand();
         $adapter = $this->createStub(AdapterInterface::class);
-        $adapter->method('to')->willReturnSelf();
-        $adapter->method('from')->willReturnSelf();
-        $adapter->method('subject')->willReturnSelf();
-        $adapter->method('body')->willReturnSelf();
+        $adapter->method('withTo')->willReturnSelf();
+        $adapter->method('withFrom')->willReturnSelf();
+        $adapter->method('withSubject')->willReturnSelf();
+        $adapter->method('withBody')->willReturnSelf();
 
         $mailer = $this->createStub(MailerInterface::class);
         $mailer->method('getAdapter')->willReturn($adapter);
@@ -81,14 +81,15 @@ final class SendEmailCommandHandlerTest extends TestCase
     {
         $command = $this->makeCommand();
         $adapter = $this->createMock(AdapterInterface::class);
-        $adapter->expects($this->once())->method('to')->with('to@example.com')->willReturnSelf();
-        $adapter->expects($this->once())->method('from')->with('from@example.com')->willReturnSelf();
-        $adapter->expects($this->once())->method('subject')->with('Subject')->willReturnSelf();
-        $adapter->expects($this->once())->method('body')->with('Body')->willReturnSelf();
+        $adapter->expects($this->once())->method('withTo')->with('to@example.com')->willReturnSelf();
+        $adapter->expects($this->once())->method('withFrom')->with('from@example.com')->willReturnSelf();
+        $adapter->expects($this->once())->method('withSubject')->with('Subject')->willReturnSelf();
+        $adapter->expects($this->once())->method('withBody')->with('Body')->willReturnSelf();
 
-        $mailer = $this->createStub(MailerInterface::class);
-        $mailer->method('getAdapter')->willReturn($adapter);
-        $mailer->method('send')->willReturn(true);
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->once())->method('getAdapter')->willReturn($adapter);
+        $mailer->expects($this->once())->method('setAdapter')->with($adapter);
+        $mailer->expects($this->once())->method('send')->willReturn(true);
 
         $handler = new SendEmailCommandHandler($mailer);
         $result  = $handler->handle($command);

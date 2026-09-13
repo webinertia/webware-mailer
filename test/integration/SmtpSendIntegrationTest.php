@@ -81,10 +81,10 @@ final class SmtpSendIntegrationTest extends TestCase
             'smtp_auth'        => false,
         ]);
 
-        $adapter->to('to@example.com')
-            ->from('from@example.com')
-            ->subject('Integration Subject')
-            ->body('Integration Body');
+        $adapter = $adapter->withTo('to@example.com')
+            ->withFrom('from@example.com')
+            ->withSubject('Integration Subject')
+            ->withBody('Integration Body');
 
         $mailer = new Mailer($adapter);
 

@@ -1,6 +1,6 @@
 # Configuration Reference
 
-`Webware\Mailer\ConfigProvider` publishes four configuration groups:
+`Webware\Mailer\ConfigProvider` publishes three configuration groups:
 
 | Key | Contents |
 |---|---|
@@ -8,11 +8,11 @@
 | `templates` | Template path list under `paths.mail` |
 | `Webware\MessageBus\MessageBusInterface::class` | `command_map` mapping `SendEmailCommand` to its handler |
 | `Webware\Mailer\Adapter\AdapterInterface::class` | Adapter options (see below) |
-| `Webware\Mailer\Adapter\MessageInterface::class` | Message options (currently empty) |
 
 ## Adapter Options
 
-Adapter options live under the `AdapterInterface` key:
+Adapter options live under the single `AdapterInterface` key — this is the only
+path the adapter factory reads:
 
 ```php
 use Webware\Mailer\Adapter\AdapterInterface;
@@ -30,6 +30,7 @@ return [
         'encoding'        => 'base64',
         'timeout'         => 30,
         'smtp_secure'     => 'tls',
+        'from'            => 'sender@example.com',
     ],
 ];
 ```
@@ -47,9 +48,16 @@ return [
 | `encoding` | `string` | `base64` | Content transfer encoding |
 | `timeout` | `int` | `30` | SMTP connection timeout in seconds |
 | `smtp_secure` | `string` | `''` | `tls` or `ssl`; empty for none |
+| `from` | `string` | `''` | Default sender address; applied to the adapter when not empty |
 
-If the `AdapterInterface` configuration entry is missing entirely, creating the
-adapter throws `Laminas\ServiceManager\Exception\ServiceNotCreatedException`.
+The section is published as an `AdapterConfig` shape (see the `@type` alias on
+`ConfigProvider`), and every key is optional — the defaults above are applied by
+`Webware\Mailer\Container\PhpMailerFactory` for any key that is absent. Once the
+adapter is built, read the values from it as typed properties
+(`$adapter->host`, `$adapter->from`, ...) rather than from the raw array.
+
+If the `AdapterInterface` configuration entry is missing, not an array, or empty,
+creating the adapter throws `Laminas\ServiceManager\Exception\ServiceNotCreatedException`.
 
 ## Templates
 

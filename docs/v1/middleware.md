@@ -1,25 +1,10 @@
 # Middleware
 
-`Webware\Mailer\Http\Middleware\MailerMiddleware` prepares the adapter during a
-request: it sets the configured sender address and attaches the `Mailer` to
-the request as an attribute.
+`Webware\Mailer\Http\Middleware\MailerMiddleware` attaches the `Mailer` to the
+request as an attribute. It carries no configuration of its own — the adapter's
+settings, including its default sender, come from the adapter contract.
 
 ## Wiring
-
-The factory reads settings from the application config:
-
-```php
-use Webware\Mailer\Adapter\AdapterInterface;
-use Webware\Mailer\ConfigProvider;
-
-return [
-    ConfigProvider::class => [
-        AdapterInterface::class => [
-            'from' => 'sender@example.com',
-        ],
-    ],
-];
-```
 
 Pipe the middleware:
 
@@ -28,15 +13,29 @@ Pipe the middleware:
 $app->pipe(\Webware\Mailer\Http\Middleware\MailerMiddleware::class);
 ```
 
+The factory resolves the mailer from the container under `MailerInterface::class`;
+there is nothing to configure for this middleware.
+
+The sender address is configuration on the adapter instead, and is applied once when
+the adapter is built:
+
+```php
+use Webware\Mailer\Adapter\AdapterInterface;
+
+return [
+    AdapterInterface::class => [
+        'from' => 'sender@example.com',
+    ],
+];
+```
+
 ## Behavior
 
 For each request, the middleware:
 
-1. Retrieves the adapter from the `Mailer`.
-2. Calls `from()` on the adapter when the `from` config key is a string.
-3. Attaches the `Mailer` to the request under the `MailerInterface::class`
+1. Attaches the `Mailer` to the request under the `MailerInterface::class`
    attribute key.
-4. Delegates to the next handler.
+2. Delegates to the next handler.
 
 Downstream middleware and handlers can read the mailer:
 
@@ -46,5 +45,12 @@ use Webware\Mailer\MailerInterface;
 $mailer = $request->getAttribute(MailerInterface::class);
 ```
 
-If the `ConfigProvider` entry or the adapter settings are not arrays, the
-factory throws `RuntimeException`.
+Read the adapter's typed settings from the adapter itself:
+
+```php
+$adapter = $mailer->getAdapter();
+
+if (null !== $adapter) {
+    $from = $adapter->from;   // string, from the adapter config section
+}
+```

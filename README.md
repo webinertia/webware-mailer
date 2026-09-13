@@ -40,11 +40,12 @@ $mailer = (new MailerFactory())($container);
 $adapter = $mailer->getAdapter();
 
 if (null !== $adapter) {
-    $adapter->to('recipient@example.com')
-        ->from('sender@example.com')
-        ->subject('Hello')
-        ->body('Message body');
+    $adapter = $adapter->withTo('recipient@example.com')
+        ->withFrom('sender@example.com')
+        ->withSubject('Hello')
+        ->withBody('Message body');
 
+    $mailer->setAdapter($adapter);
     $mailer->send();
 }
 ```
