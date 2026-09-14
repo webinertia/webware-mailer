@@ -14,12 +14,19 @@ declare(strict_types=1);
 
 namespace Webware\Mailer;
 
-/** @api */
+/**
+ * The component's entry point.
+ *
+ * A mailer cannot work without an adapter, and the adapter is supplied once by
+ * its factory through the constructor — it is not a mutable collaborator. The
+ * message is passed per send, so no message state is held here and two sends
+ * cannot bleed into one another.
+ *
+ * @api
+ */
 interface MailerInterface
 {
-    public function getAdapter(): ?Adapter\AdapterInterface;
+    public function getAdapter(): Adapter\AdapterInterface;
 
-    public function send(): bool;
-
-    public function setAdapter(Adapter\AdapterInterface $adapter): self;
+    public function send(Adapter\MessageInterface $message): bool;
 }

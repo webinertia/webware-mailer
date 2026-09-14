@@ -90,20 +90,12 @@ final class PhpMailerFactoryTest extends TestCase
                 'username'         => 'user',
                 // @mago-expect lint:no-literal-password
                 'password'   => 'pass',
-                'charset'    => 'iso-8859-1',
-                'encoding'   => 'quoted-printable',
                 'timeout'    => 45,
                 'smtpSecure' => 'tls',
-                'from'       => 'from@example.com',
-                'fromName'   => 'Example Sender',
             ],
         ]));
 
         $this->assertFalse($result->enableExceptions);
-        $this->assertSame('iso-8859-1', $result->charset);
-        $this->assertSame('quoted-printable', $result->encoding);
-        $this->assertSame('from@example.com', $result->from);
-        $this->assertSame('Example Sender', $result->fromName);
         $this->assertSame('smtp.example.com', $result->host);
         $this->assertSame('pass', $result->password);
         $this->assertSame(587, $result->port);
@@ -113,8 +105,6 @@ final class PhpMailerFactoryTest extends TestCase
         $this->assertSame('user', $result->username);
         $this->assertTrue($result->isSmtp());
         $this->assertFalse($result->isMail());
-        $this->assertSame('from@example.com', $this->baseMailer($result)->From);
-        $this->assertSame('Example Sender', $this->baseMailer($result)->FromName);
     }
 
     /**
@@ -133,10 +123,6 @@ final class PhpMailerFactoryTest extends TestCase
         ]));
 
         $this->assertTrue($result->enableExceptions);
-        $this->assertSame('iso-8859-1', $result->charset);
-        $this->assertSame('8bit', $result->encoding);
-        $this->assertSame('', $result->from);
-        $this->assertSame('', $result->fromName);
         $this->assertSame('localhost', $result->host);
         $this->assertSame('', $result->password);
         $this->assertSame(25, $result->port);
@@ -146,32 +132,6 @@ final class PhpMailerFactoryTest extends TestCase
         $this->assertSame('', $result->username);
         $this->assertFalse($result->isSmtp());
         $this->assertTrue($result->isMail());
-        $this->assertSame('', $this->baseMailer($result)->From);
-    }
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws ReflectionException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function invokeHonorsCharsetAndEncodingConfig(): void
-    {
-        $factory = new PhpMailerFactory();
-        $result  = $factory($this->makeContainer([
-            AdapterInterface::class => [
-                'useSmtp'  => true,
-                'host'     => 'smtp.example.com',
-                'charset'  => 'iso-8859-1',
-                'encoding' => 'quoted-printable',
-            ],
-        ]));
-
-        $base = $this->baseMailer($result);
-
-        $this->assertSame('iso-8859-1', $base->CharSet);
-        $this->assertSame('quoted-printable', $base->Encoding);
     }
 
     /**

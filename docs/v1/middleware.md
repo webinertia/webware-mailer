@@ -45,12 +45,16 @@ use Webware\Mailer\MailerInterface;
 $mailer = $request->getAttribute(MailerInterface::class);
 ```
 
-Read the adapter's typed settings from the adapter itself:
+Read the adapter's typed transport settings from the adapter itself:
 
 ```php
 $adapter = $mailer->getAdapter();
 
-if (null !== $adapter) {
-    $from = $adapter->from;   // string, from the adapter config section
-}
+$host = $adapter->host;   // string, from the adapter config section
+```
+
+Message content — sender included — lives on the message instead:
+
+```php
+$from = (new Message())->withFrom('sender@example.com')->from;
 ```

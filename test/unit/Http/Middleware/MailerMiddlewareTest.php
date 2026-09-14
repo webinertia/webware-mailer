@@ -21,6 +21,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\Http\Middleware\MailerMiddleware;
 use Webware\Mailer\Mailer;
 use Webware\Mailer\MailerInterface;
@@ -32,15 +33,14 @@ final class MailerMiddlewareTest extends TestCase
 {
     /**
      * The middleware carries no configuration of its own: it injects the mailer
-     * it was built with and nothing else. The adapter's settings, including its
-     * default sender, live on the adapter contract.
+     * it was built with and nothing else.
      *
      * @throws \PHPUnit\Exception
      */
     #[Test]
     public function processInjectsTheMailerIntoTheRequest(): void
     {
-        $mailer               = new Mailer(null);
+        $mailer               = new Mailer($this->createStub(AdapterInterface::class));
         $requestWithAttribute = $this->createStub(ServerRequestInterface::class);
         $capturedAttribute    = null;
         $capturedValue        = null;

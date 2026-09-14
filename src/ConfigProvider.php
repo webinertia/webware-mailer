@@ -41,19 +41,26 @@ final readonly class ConfigProvider
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Both adapters are registered as services, but `AdapterInterface` is not
+     * aliased here: mapping the contract to the implementation to use is the
+     * host's runtime decision, so it is the one line the host adds. See
+     * docs/v1/adapters.md.
+     *
+     * @return array<string, mixed>
+     */
     public function getDependencies(): array
     {
         return [
             'aliases'   => [
-                AdapterInterface::class => Adapter\PhpMailer::class, // required mapping
                 MailerInterface::class => Mailer::class,
             ],
             'factories' => [
-                Adapter\PhpMailer::class                      => Container\PhpMailerFactory::class,
                 CommandHandler\SendEmailCommandHandler::class => CommandHandler\Container\SendEmailCommandHandlerFactory::class,
                 Mailer::class                                 => Container\MailerFactory::class,
                 Http\Middleware\MailerMiddleware::class       => Http\Middleware\Container\MailerMiddlewareFactory::class,
+                Adapter\PhpMailer::class                      => Container\PhpMailerFactory::class,
+                Adapter\SymfonyMailer::class                  => Container\SymfonyMailerFactory::class,
             ],
         ];
     }

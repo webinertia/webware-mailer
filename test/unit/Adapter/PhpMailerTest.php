@@ -14,16 +14,20 @@ declare(strict_types=1);
 
 namespace WebwareTest\Mailer\Adapter;
 
+use LogicException;
 use PHPMailer\PHPMailer\Exception as MailerException;
 use PHPMailer\PHPMailer\PHPMailer as BaseMailer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use ReflectionProperty;
 use Webware\Mailer\Adapter\PhpMailer;
+use Webware\Mailer\Message;
 
-use function base64_encode;
+use function array_column;
+use function basename;
 use function bin2hex;
 use function file_put_contents;
 use function random_bytes;
@@ -31,54 +35,97 @@ use function sys_get_temp_dir;
 use function tempnam;
 use function unlink;
 
+/**
+ * The adapter owns transport settings only; the transport it builds is held for
+ * the adapter's lifetime and each send clears the previous message off it before
+ * applying its own. These tests drive that path without touching the network.
+ */
 #[CoversClass(PhpMailer::class)]
 #[CoversMethod(PhpMailer::class, '__construct')]
+#[CoversMethod(PhpMailer::class, 'applyMessage')]
+#[CoversMethod(PhpMailer::class, 'createTransport')]
 #[CoversMethod(PhpMailer::class, 'fromConfig')]
 #[CoversMethod(PhpMailer::class, 'isMail')]
 #[CoversMethod(PhpMailer::class, 'isSmtp')]
+#[CoversMethod(PhpMailer::class, 'resetMessageState')]
 #[CoversMethod(PhpMailer::class, 'send')]
-#[CoversMethod(PhpMailer::class, 'withAltBody')]
-#[CoversMethod(PhpMailer::class, 'withAttachment')]
-#[CoversMethod(PhpMailer::class, 'withAttachmentFromString')]
-#[CoversMethod(PhpMailer::class, 'withBcc')]
-#[CoversMethod(PhpMailer::class, 'withBody')]
-#[CoversMethod(PhpMailer::class, 'withCc')]
-#[CoversMethod(PhpMailer::class, 'withCharset')]
-#[CoversMethod(PhpMailer::class, 'withEncoding')]
-#[CoversMethod(PhpMailer::class, 'withFrom')]
-#[CoversMethod(PhpMailer::class, 'withHeader')]
-#[CoversMethod(PhpMailer::class, 'withHtml')]
-#[CoversMethod(PhpMailer::class, 'withReplyTo')]
-#[CoversMethod(PhpMailer::class, 'withSubject')]
-#[CoversMethod(PhpMailer::class, 'withTo')]
 final class PhpMailerTest extends TestCase
 {
     /**
-     * @throws MailerException
+     * An empty charset or encoding leaves PHPMailer's own default in force.
+     *
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function charsetFromConfigReachesTheTransport(): void
+    public function anEmptyCharsetAndEncodingLeaveTheLibraryDefaultsAlone(): void
     {
-        $adapter = PhpMailer::fromConfig(['charset' => 'utf-8']);
+        $defaults  = new BaseMailer();
+        $transport = $this->transport(PhpMailer::fromConfig());
 
-        $this->assertSame('utf-8', $adapter->charset);
-        $this->assertSame('utf-8', $this->transport($adapter)->CharSet);
+        $this->assertSame($defaults->CharSet, $transport->CharSet);
+        $this->assertSame($defaults->Encoding, $transport->Encoding);
+    }
+
+    /**
+     * An empty sender leaves the transport without one.
+     *
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function anEmptyFromIsNotApplied(): void
+    {
+        $this->assertSame('', $this->transport(PhpMailer::fromConfig())->From);
     }
 
     /**
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function defaultsMirrorTheTransportWithNoConfiguration(): void
+    public function attachmentsAreAppliedAsBase64(): void
+    {
+        $path = (string) tempnam(
+            directory: sys_get_temp_dir(),
+            prefix   : 'mailer-adapter',
+        );
+
+        file_put_contents(
+            filename: $path,
+            data    : 'content',
+        );
+
+        $raw = $this->transport(
+            PhpMailer::fromConfig(),
+            new Message(attachments: [['raw content', 'raw.txt', 'text/plain', true]]),
+        );
+
+        $this->assertCount(1, $raw->getAttachments());
+
+        // A raw attachment must not stop the ones that follow it from being applied.
+        $both = $this->transport(
+            PhpMailer::fromConfig(),
+            new Message(attachments: [
+                ['raw content', 'raw.txt',  'text/plain', true],
+                [$path,         'file.txt', 'text/plain', false],
+            ]),
+        );
+
+        $this->assertSame(
+            ['raw.txt', basename($path)],
+            array_column($both->getAttachments(), 1),
+        );
+
+        unlink(filename: $path);
+    }
+
+    /**
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function defaultsMirrorTheTransport(): void
     {
         $adapter = PhpMailer::fromConfig();
 
         $this->assertTrue($adapter->enableExceptions);
-        $this->assertSame('iso-8859-1', $adapter->charset);
-        $this->assertSame('8bit', $adapter->encoding);
-        $this->assertSame('', $adapter->from);
-        $this->assertSame('', $adapter->fromName);
         $this->assertSame('localhost', $adapter->host);
         $this->assertSame('', $adapter->password);
         $this->assertSame(25, $adapter->port);
@@ -86,23 +133,17 @@ final class PhpMailerTest extends TestCase
         $this->assertSame('', $adapter->smtpSecure);
         $this->assertSame(300, $adapter->timeout);
         $this->assertSame('', $adapter->username);
-
-        $this->assertSame('iso-8859-1', $this->transport($adapter)->CharSet);
-        $this->assertSame('text/plain', $this->transport($adapter)->ContentType);
+        $this->assertFalse($adapter->useSmtp);
     }
 
     /**
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function fromConfigExposesTheConfigurationContract(): void
+    public function fromConfigExposesTheTransportContract(): void
     {
         $adapter = PhpMailer::fromConfig([
             'enableExceptions' => false,
-            'charset'          => 'iso-8859-1',
-            'encoding'         => 'quoted-printable',
-            'from'             => 'from@example.com',
-            'fromName'         => 'Example Sender',
             'host'             => 'smtp.example.com',
             'password'         => bin2hex(random_bytes(16)),
             'port'             => 587,
@@ -110,13 +151,10 @@ final class PhpMailerTest extends TestCase
             'smtpSecure'       => 'tls',
             'timeout'          => 45,
             'username'         => 'user',
+            'useSmtp'          => true,
         ]);
 
         $this->assertFalse($adapter->enableExceptions);
-        $this->assertSame('iso-8859-1', $adapter->charset);
-        $this->assertSame('quoted-printable', $adapter->encoding);
-        $this->assertSame('from@example.com', $adapter->from);
-        $this->assertSame('Example Sender', $adapter->fromName);
         $this->assertSame('smtp.example.com', $adapter->host);
         $this->assertNotSame('', $adapter->password);
         $this->assertSame(587, $adapter->port);
@@ -124,432 +162,173 @@ final class PhpMailerTest extends TestCase
         $this->assertSame('tls', $adapter->smtpSecure);
         $this->assertSame(45, $adapter->timeout);
         $this->assertSame('user', $adapter->username);
+        $this->assertTrue($adapter->useSmtp);
+        $this->assertFalse($adapter->smtpKeepAlive);
     }
 
     /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function isMailReportsTheTransportMode(): void
-    {
-        $adapter = PhpMailer::fromConfig();
-
-        $this->assertTrue($adapter->isMail());
-        $this->assertFalse($adapter->isSmtp());
-    }
-
-    /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function isSmtpReportsTheTransportMode(): void
-    {
-        $adapter = PhpMailer::fromConfig(['useSmtp' => true]);
-
-        $this->assertTrue($adapter->isSmtp());
-        $this->assertFalse($adapter->isMail());
-    }
-
-    /**
-     * @throws MailerException
      * @throws \PHPUnit\Exception
      */
     #[Test]
     public function sendDelegatesToTheTransport(): void
     {
-        $adapter = PhpMailer::fromConfig(['enableExceptions' => true]);
-
         $this->expectException(MailerException::class);
 
-        $adapter->send();
+        PhpMailer::fromConfig(['enableExceptions' => true])->send(new Message());
     }
 
     /**
-     * @throws MailerException
+     * The adapter keeps one transport for its whole life, so each send has to
+     * clear what the previous message left on it.
+     *
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function withAltBodyReturnsNewInstanceAndSetsAltBody(): void
+    public function sendsDoNotAccumulateRecipients(): void
     {
         $adapter = PhpMailer::fromConfig();
 
-        $next = $adapter->withAltBody('plain text');
+        $this->attemptSend($adapter, new Message(
+            attachments: [['raw content', 'raw.txt', 'text/plain', true]],
+            headers    : [['X-Test', 'value']],
+            subject    : 'First',
+            to         : [['alice@example.com', '']],
+        ));
 
-        $this->assertNotSame($adapter, $next);
-        $this->assertSame('plain text', $this->transport($next)->AltBody);
-    }
+        $this->assertSame([['alice@example.com', '']], $this->transport($adapter)->getToAddresses());
 
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withAttachmentAccumulatesAttachmentsAcrossRebuilds(): void
-    {
-        $path = (string) tempnam(
-            directory: sys_get_temp_dir(),
-            prefix   : 'mailer-attach-accumulate',
-        );
-        file_put_contents(
-            filename: $path,
-            data    : 'content',
-        );
+        $this->attemptSend($adapter, new Message(to: [['bob@example.com', '']]));
 
-        $adapter = PhpMailer::fromConfig()
-            ->withAttachment($path, 'first.txt', 'text/plain')
-            ->withAttachmentFromString('raw content', 'second.txt', 'text/plain');
+        $transport = $this->transport($adapter);
 
-        $this->assertCount(2, $this->transport($adapter)->getAttachments());
-
-        unlink(filename: $path);
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withAttachmentDelegatesToAddAttachment(): void
-    {
-        $path = (string) tempnam(
-            directory: sys_get_temp_dir(),
-            prefix   : 'mailer-attach',
-        );
-        file_put_contents(
-            filename: $path,
-            data    : 'content',
-        );
-
-        $adapter = PhpMailer::fromConfig();
-        $next    = $adapter->withTo('to@example.com')
-            ->withBody('body')
-            ->withAttachment($path, 'file.txt', 'text/plain');
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertCount(1, $this->transport($next)->getAttachments());
-        $this->assertStringContainsString(base64_encode('content'), $this->mime($next));
-
-        unlink(filename: $path);
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withAttachmentFromStringDelegatesToAddStringAttachment(): void
-    {
-        $adapter = PhpMailer::fromConfig();
-
-        $next = $adapter->withTo('to@example.com')
-            ->withBody('body')
-            ->withAttachmentFromString('content', 'file.txt', 'text/plain');
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertCount(1, $this->transport($next)->getAttachments());
-        $this->assertStringContainsString(base64_encode('content'), $this->mime($next));
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withAttachmentFromStringKeepsFollowingAttachments(): void
-    {
-        $path = (string) tempnam(
-            directory: sys_get_temp_dir(),
-            prefix   : 'mailer-attach-raw-first',
-        );
-        file_put_contents(
-            filename: $path,
-            data    : 'content',
-        );
-
-        $adapter = PhpMailer::fromConfig()
-            ->withAttachmentFromString('raw content', 'first.txt', 'text/plain')
-            ->withAttachment($path, 'second.txt', 'text/plain');
-
-        $this->assertCount(2, $this->transport($adapter)->getAttachments());
-
-        unlink(filename: $path);
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withBccAccumulatesRecipientsAcrossRebuilds(): void
-    {
-        $adapter = PhpMailer::fromConfig()
-            ->withBcc('first@example.com', 'First')
-            ->withBcc('second@example.com', 'Second');
-
-        $this->assertSame(
-            [
-                ['first@example.com',  'First'],
-                ['second@example.com', 'Second'],
-            ],
-            $this->transport($adapter)->getBccAddresses(),
-        );
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withBccAddsBccAddress(): void
-    {
-        $adapter = PhpMailer::fromConfig();
-
-        $next = $adapter->withBcc('bcc@example.com', 'Bcc');
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertSame('bcc@example.com', $this->transport($next)->getBccAddresses()[0][0]);
+        $this->assertSame([['bob@example.com', '']], $transport->getToAddresses());
+        $this->assertSame('', $transport->Subject);
+        $this->assertSame([], $transport->getCustomHeaders());
+        $this->assertSame([], $transport->getAttachments());
+        $this->assertSame('', $transport->Body);
+        $this->assertSame('', $transport->AltBody);
     }
 
     /**
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function withBodyReturnsNewInstanceAndSetsBody(): void
+    public function theMessageIsAppliedOnTheTransport(): void
     {
-        $adapter = PhpMailer::fromConfig();
+        $transport = $this->transport(PhpMailer::fromConfig(), new Message(
+            altBody : 'plain',
+            body    : '<p>html</p>',
+            charset : 'utf-8',
+            encoding: 'quoted-printable',
+            from    : 'from@example.com',
+            fromName: 'Example Sender',
+            headers : [['X-Test', 'value']],
+            html    : true,
+            replyTo : [['reply@example.com', 'Reply']],
+            subject : 'Subject',
+            to      : [['to@example.com', 'To']],
+            cc      : [['cc@example.com', 'Cc']],
+            bcc     : [['bcc@example.com', 'Bcc']],
+        ));
 
-        $next = $adapter->withBody('<p>html</p>');
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertSame('<p>html</p>', $this->transport($next)->Body);
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withCcAccumulatesRecipientsAcrossRebuilds(): void
-    {
-        $adapter = PhpMailer::fromConfig()
-            ->withCc('first@example.com', 'First')
-            ->withCc('second@example.com', 'Second');
-
-        $this->assertSame(
-            [
-                ['first@example.com',  'First'],
-                ['second@example.com', 'Second'],
-            ],
-            $this->transport($adapter)->getCcAddresses(),
-        );
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withCcAddsCcAddress(): void
-    {
-        $adapter = PhpMailer::fromConfig();
-
-        $next = $adapter->withCc('cc@example.com', 'Cc');
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertSame('cc@example.com', $this->transport($next)->getCcAddresses()[0][0]);
+        $this->assertSame('utf-8', $transport->CharSet);
+        $this->assertSame('quoted-printable', $transport->Encoding);
+        $this->assertSame('from@example.com', $transport->From);
+        $this->assertSame('Example Sender', $transport->FromName);
+        $this->assertSame('Subject', $transport->Subject);
+        $this->assertSame('<p>html</p>', $transport->Body);
+        $this->assertSame('plain', $transport->AltBody);
+        $this->assertSame('text/html', $transport->ContentType);
+        $this->assertSame([['to@example.com', 'To']], $transport->getToAddresses());
+        $this->assertSame([['cc@example.com', 'Cc']], $transport->getCcAddresses());
+        $this->assertSame([['bcc@example.com', 'Bcc']], $transport->getBccAddresses());
+        $this->assertCount(1, $transport->getReplyToAddresses());
+        $this->assertSame([['X-Test', 'value']], $transport->getCustomHeaders());
     }
 
     /**
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function withCharsetReturnsNewInstanceAndSetsCharSet(): void
+    public function thePredicatesReportTheConfiguredTransport(): void
     {
-        $adapter = PhpMailer::fromConfig();
+        $this->assertTrue(PhpMailer::fromConfig()->isMail());
+        $this->assertFalse(PhpMailer::fromConfig()->isMail() && false);
 
-        $next = $adapter->withCharset('iso-8859-1');
+        $smtp = PhpMailer::fromConfig(['useSmtp' => true]);
 
-        $this->assertNotSame($adapter, $next);
-        $this->assertSame('iso-8859-1', $this->transport($next)->CharSet);
-        $this->assertSame('iso-8859-1', $next->charset);
+        $this->assertTrue($smtp->isSmtp());
+        $this->assertFalse($smtp->isMail());
+
+        $mail = PhpMailer::fromConfig();
+
+        $this->assertFalse($mail->isSmtp());
+        $this->assertTrue($mail->isMail());
     }
 
     /**
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function withEncodingReturnsNewInstanceAndSetsEncoding(): void
+    public function theTransportIsConfiguredFromTheAdapter(): void
     {
-        $adapter = PhpMailer::fromConfig();
+        $transport = $this->transport(PhpMailer::fromConfig([
+            'enableExceptions' => true,
+            'host'             => 'smtp.example.com',
+            'port'             => 587,
+            'smtpAuth'         => true,
+            'smtpKeepAlive'    => true,
+            'smtpSecure'       => 'tls',
+            'timeout'          => 45,
+            'username'         => 'user',
+            'useSmtp'          => true,
+        ]));
 
-        $next = $adapter->withEncoding('quoted-printable');
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertSame('quoted-printable', $this->transport($next)->Encoding);
-        $this->assertSame('quoted-printable', $next->encoding);
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withFromDelegatesToSetFrom(): void
-    {
-        $adapter = PhpMailer::fromConfig();
-
-        $next = $adapter->withFrom('from@example.com', 'From');
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertSame('from@example.com', $this->transport($next)->From);
-        $this->assertSame('from@example.com', $next->from);
-        $this->assertSame('From', $next->fromName);
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withHeaderAccumulatesHeadersAcrossRebuilds(): void
-    {
-        $adapter = PhpMailer::fromConfig()
-            ->withHeader('X-First', 'one')
-            ->withHeader('X-Second', 'two');
-
-        $this->assertSame(
-            [['X-First', 'one'], ['X-Second', 'two']],
-            $this->transport($adapter)->getCustomHeaders(),
-        );
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withHeaderDelegatesToAddCustomHeader(): void
-    {
-        $adapter = PhpMailer::fromConfig();
-
-        $next = $adapter->withHeader('X-Test', 'value');
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertSame([['X-Test', 'value']], $this->transport($next)->getCustomHeaders());
+        $this->assertSame('smtp', $transport->Mailer);
+        $this->assertSame('smtp.example.com', $transport->Host);
+        $this->assertSame(587, $transport->Port);
+        $this->assertTrue($transport->SMTPAuth);
+        $this->assertTrue($transport->SMTPKeepAlive);
+        $this->assertSame('user', $transport->Username);
+        $this->assertSame('tls', $transport->SMTPSecure);
+        $this->assertSame(45, $transport->Timeout);
     }
 
     /**
      * @throws \PHPUnit\Exception
      */
-    #[Test]
-    public function withHtmlDefaultsToTrue(): void
+    private function attemptSend(PhpMailer $adapter, Message $message): void
     {
-        $adapter = PhpMailer::fromConfig();
-
-        $next = $adapter->withHtml();
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertSame('text/html', $this->transport($next)->ContentType);
+        try {
+            $adapter->send($message);
+        } catch (MailerException $exception) {
+            // There is no mail transport in the test environment, so the send is
+            // expected to fail; the state it left on the shared transport is what
+            // these tests inspect.
+            $this->assertNotSame('', $exception->getMessage());
+        }
     }
 
     /**
-     * @throws MailerException
+     * The transport the adapter holds, with an optional message applied to it.
+     * `applyMessage()` is what `send()` runs against PHPMailer, so driving it
+     * directly keeps message assertions off the network.
+     *
      * @throws \PHPUnit\Exception
      */
-    #[Test]
-    public function withReplyToAccumulatesRecipientsAcrossRebuilds(): void
+    private function transport(PhpMailer $adapter, ?Message $message = null): BaseMailer
     {
-        $adapter = PhpMailer::fromConfig()
-            ->withReplyTo('first@example.com', 'First')
-            ->withReplyTo('second@example.com', 'Second');
+        if ($message instanceof Message) {
+            new ReflectionMethod(PhpMailer::class, 'applyMessage')->invoke($adapter, $message);
+        }
 
-        $this->assertSame(
-            [
-                ['first@example.com',  'First'],
-                ['second@example.com', 'Second'],
-            ],
-            $this->transport($adapter)->getReplyToAddresses(),
-        );
-    }
+        /** @var mixed $transport */
+        $transport = new ReflectionProperty(PhpMailer::class, 'mailer')->getValue($adapter);
 
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withReplyToDelegatesToAddReplyTo(): void
-    {
-        $adapter = PhpMailer::fromConfig();
+        if (! $transport instanceof BaseMailer) {
+            throw new LogicException('Expected a BaseMailer instance.');
+        }
 
-        $next = $adapter->withReplyTo('reply@example.com', 'Reply');
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertCount(1, $this->transport($next)->getReplyToAddresses());
-    }
-
-    /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withSubjectReturnsNewInstanceAndSetsSubject(): void
-    {
-        $adapter = PhpMailer::fromConfig();
-
-        $next = $adapter->withSubject('Hello');
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertSame('Hello', $this->transport($next)->Subject);
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withToAccumulatesRecipientsAcrossRebuilds(): void
-    {
-        $adapter = PhpMailer::fromConfig()
-            ->withTo('first@example.com', 'First')
-            ->withTo('second@example.com', 'Second');
-
-        $this->assertSame(
-            [
-                ['first@example.com',  'First'],
-                ['second@example.com', 'Second'],
-            ],
-            $this->transport($adapter)->getToAddresses(),
-        );
-    }
-
-    /**
-     * @throws MailerException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function withToDelegatesToAddAddress(): void
-    {
-        $adapter = PhpMailer::fromConfig();
-
-        $next = $adapter->withTo('to@example.com', 'To');
-
-        $this->assertNotSame($adapter, $next);
-        $this->assertSame('to@example.com', $this->transport($next)->getToAddresses()[0][0]);
-    }
-
-    /**
-     * @throws MailerException
-     */
-    private function mime(PhpMailer $adapter): string
-    {
-        $mailer = $this->transport($adapter);
-
-        $mailer->preSend();
-
-        return $mailer->getSentMIMEMessage();
-    }
-
-    private function transport(PhpMailer $adapter): BaseMailer
-    {
-        return new ReflectionProperty(PhpMailer::class, 'mailer')->getValue($adapter);
+        return $transport;
     }
 }

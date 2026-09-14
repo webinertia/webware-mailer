@@ -15,38 +15,20 @@ declare(strict_types=1);
 namespace Webware\Mailer\Adapter;
 
 /**
- * Adapter contract.
+ * Transport contract.
  *
- * The settings the adapter was configured with are exposed as read-only
- * properties, so consumers read typed values instead of raw configuration
- * arrays. Implementations are free to publish additional optional properties of
- * their own, but the ones declared here are the minimum an implementation needs.
+ * An adapter owns a configured transport and sends messages over it. It is built
+ * by its factory from that implementation's own configuration shape, so this
+ * contract describes nothing about the transport's settings: the factory is the
+ * only consumer of those, and they stay on the concrete adapter.
+ *
+ * The two supported libraries share no exception interface, so implementations
+ * may throw their own library's transport exception; callers that need to handle
+ * failures should catch per implementation.
  *
  * @api
  */
-interface AdapterInterface extends MessageInterface
+interface AdapterInterface
 {
-    public string $charset { get; }
-
-    public string $encoding { get; }
-
-    public string $from { get; }
-
-    public string $fromName { get; }
-
-    public string $host { get; }
-
-    public string $password { get; }
-
-    public int $port { get; }
-
-    public bool $smtpAuth { get; }
-
-    public string $smtpSecure { get; }
-
-    public int $timeout { get; }
-
-    public string $username { get; }
-
-    public function send(): bool;
+    public function send(MessageInterface $message): bool;
 }

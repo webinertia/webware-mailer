@@ -8,17 +8,17 @@ namespace Webware\Mailer;
 
 interface MailerInterface
 {
-    public function getAdapter(): ?Adapter\AdapterInterface;
+    public function getAdapter(): Adapter\AdapterInterface;
 
-    public function send(): bool;
-
-    public function setAdapter(Adapter\AdapterInterface $adapter): self;
+    public function send(Adapter\MessageInterface $message): bool;
 }
 ```
 
-- `getAdapter()` returns `null` until an adapter is set.
-- `setAdapter()` replaces the adapter and returns `$this`.
-- `send()` throws `RuntimeException` when no adapter is configured.
+- `getAdapter()` returns the adapter the mailer was built with. The adapter is
+  supplied by the factory, so it is never absent.
+- `send()` builds nothing: it hands the message you give it to the adapter.
+- Nothing about a message is stored here, so two sends cannot bleed into one
+  another — see [Adapters](adapters.md).
 
 ## Usage
 
@@ -27,21 +27,17 @@ registered by `ConfigProvider`):
 
 ```php
 use Webware\Mailer\MailerInterface;
+use Webware\Mailer\Message;
 
 /** @var MailerInterface $mailer */
 $mailer = $container->get(MailerInterface::class);
 
-$adapter = $mailer->getAdapter();
+$message = new Message()->withTo('recipient@example.com')
+    ->withFrom('sender@example.com')
+    ->withSubject('Hello')
+    ->withBody('Message body');
 
-if (null !== $adapter) {
-    $adapter = $adapter->withTo('recipient@example.com')
-        ->withFrom('sender@example.com')
-        ->withSubject('Hello')
-        ->withBody('Message body');
-
-    $mailer->setAdapter($adapter);
-    $mailer->send();
-}
+$mailer->send($message);
 ```
 
 ## Mailer-Aware Services
@@ -52,6 +48,7 @@ mailer:
 ```php
 use Webware\Mailer\MailerAwareInterface;
 use Webware\Mailer\MailerAwareInterfaceTrait;
+use Webware\Mailer\Message;
 
 final class OrderNotificationService implements MailerAwareInterface
 {
@@ -59,17 +56,10 @@ final class OrderNotificationService implements MailerAwareInterface
 
     public function notify(): void
     {
-        $adapter = $this->getMailer()->getAdapter();
-
-        if (null === $adapter) {
-            return;
-        }
-
-        $adapter = $adapter->withTo('customer@example.com')
+        $message = new Message()->withTo('customer@example.com')
             ->withSubject('Order confirmed');
 
-        $this->getMailer()->setAdapter($adapter);
-        $this->getMailer()->send();
+        $this->getMailer()->send($message);
     }
 }
 ```
