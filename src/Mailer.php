@@ -15,38 +15,22 @@ declare(strict_types=1);
 namespace Webware\Mailer;
 
 use Override;
-use RuntimeException;
 
 final class Mailer implements MailerInterface
 {
     public function __construct(
-        private ?Adapter\AdapterInterface $adapter,
+        private readonly Adapter\AdapterInterface $adapter,
     ) {}
 
     #[Override]
-    public function getAdapter(): ?Adapter\AdapterInterface
+    public function getAdapter(): Adapter\AdapterInterface
     {
         return $this->adapter;
     }
 
-    /**
-     * @throws RuntimeException
-     */
     #[Override]
-    public function send(): bool
+    public function send(Adapter\MessageInterface $message): bool
     {
-        if (null === $this->adapter) {
-            throw new RuntimeException('No adapter configured on Mailer instance.');
-        }
-
-        return $this->adapter->send();
-    }
-
-    #[Override]
-    public function setAdapter(Adapter\AdapterInterface $adapter): self
-    {
-        $this->adapter = $adapter;
-
-        return $this;
+        return $this->adapter->send($message);
     }
 }

@@ -31,6 +31,7 @@ use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\Adapter\PhpMailer;
 use Webware\Mailer\Container\PhpMailerFactory;
 use Webware\Mailer\Mailer;
+use Webware\Mailer\Message;
 
 use function array_key_exists;
 use function fclose;
@@ -48,11 +49,12 @@ use const PHP_BINARY;
 #[CoversClass(PhpMailerFactory::class)]
 #[CoversMethod(PhpMailerFactory::class, '__invoke')]
 #[CoversClass(PhpMailer::class)]
-#[CoversMethod(PhpMailer::class, 'withTo')]
-#[CoversMethod(PhpMailer::class, 'withFrom')]
-#[CoversMethod(PhpMailer::class, 'withSubject')]
-#[CoversMethod(PhpMailer::class, 'withBody')]
 #[CoversMethod(PhpMailer::class, 'send')]
+#[CoversClass(Message::class)]
+#[CoversMethod(Message::class, 'withTo')]
+#[CoversMethod(Message::class, 'withFrom')]
+#[CoversMethod(Message::class, 'withSubject')]
+#[CoversMethod(Message::class, 'withBody')]
 #[CoversClass(Mailer::class)]
 #[CoversMethod(Mailer::class, 'send')]
 final class SmtpSendIntegrationTest extends TestCase
@@ -81,14 +83,14 @@ final class SmtpSendIntegrationTest extends TestCase
             'smtpAuth'         => false,
         ]);
 
-        $adapter = $adapter->withTo('to@example.com')
+        $mailer = new Mailer($adapter);
+
+        $message = new Message()->withTo('to@example.com')
             ->withFrom('from@example.com')
             ->withSubject('Integration Subject')
             ->withBody('Integration Body');
 
-        $mailer = new Mailer($adapter);
-
-        self::assertTrue($mailer->send());
+        self::assertTrue($mailer->send($message));
 
         $data = $this->serverOutput();
 
@@ -121,7 +123,12 @@ final class SmtpSendIntegrationTest extends TestCase
 
         $this->expectException(MailerException::class);
 
-        $mailer->send();
+        $mailer->send(
+            new Message()->withTo('to@example.com')
+                ->withFrom('from@example.com')
+                ->withSubject('Integration Subject')
+                ->withBody('Integration Body'),
+        );
     }
 
     #[Override]

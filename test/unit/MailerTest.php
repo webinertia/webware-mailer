@@ -18,67 +18,77 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\Mailer;
+use Webware\Mailer\Message;
 
+/**
+ * The mailer holds a transport and nothing else: the message arrives per send, so
+ * there is no state here that could carry between sends.
+ */
 #[CoversClass(Mailer::class)]
 #[CoversMethod(Mailer::class, 'getAdapter')]
 #[CoversMethod(Mailer::class, 'send')]
-#[CoversMethod(Mailer::class, 'setAdapter')]
 final class MailerTest extends TestCase
 {
     /**
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function getAdapterReturnsNullByDefault(): void
+    public function getAdapterReturnsTheInjectedAdapter(): void
     {
-        $mailer = new Mailer(null);
+        $adapter = $this->createStub(AdapterInterface::class);
 
-        $this->assertNull($mailer->getAdapter());
+        $this->assertSame($adapter, new Mailer($adapter)->getAdapter());
     }
 
     /**
-     * @throws \RuntimeException
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function sendDelegatesToAdapter(): void
+    public function sendHandsTheMessageToTheAdapter(): void
     {
+        $message = new Message();
+
         $adapter = $this->createMock(AdapterInterface::class);
-        $adapter->expects($this->once())->method('send')->willReturn(true);
+        $adapter->expects($this->once())->method('send')->with($message)->willReturn(true);
+
+        $this->assertTrue(new Mailer($adapter)->send($message));
+    }
+
+    /**
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function sendReportsWhatTheAdapterReturned(): void
+    {
+        $adapter = $this->createStub(AdapterInterface::class);
+        $adapter->method('send')->willReturn(false);
+
+        $this->assertFalse(new Mailer($adapter)->send(new Message()));
+    }
+
+    /**
+     * Two sends share the transport but not the message: nothing about the first
+     * is visible to the second.
+     *
+     * @throws \PHPUnit\Exception
+     */
+    #[Test]
+    public function sendsDoNotShareMessageState(): void
+    {
+        $adapter = $this->createStub(AdapterInterface::class);
+        $adapter->method('send')->willReturn(true);
 
         $mailer = new Mailer($adapter);
 
-        $this->assertTrue($mailer->send());
-    }
+        $first  = new Message(to: [['alice@example.com', '']]);
+        $second = new Message(to: [['bob@example.com', '']]);
 
-    /**
-     * @throws \RuntimeException
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function sendThrowsWithoutAdapter(): void
-    {
-        $mailer = new Mailer(null);
+        $this->assertTrue($mailer->send($first));
+        $this->assertTrue($mailer->send($second));
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageIs('No adapter configured on Mailer instance.');
-
-        $mailer->send();
-    }
-
-    /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
-    public function setAdapterUpdatesAdapterAndReturnsSelf(): void
-    {
-        $mailer  = new Mailer(null);
-        $adapter = $this->createStub(AdapterInterface::class);
-
-        $this->assertSame($mailer, $mailer->setAdapter($adapter));
-        $this->assertSame($adapter, $mailer->getAdapter());
+        $this->assertSame([['alice@example.com', '']], $first->to);
+        $this->assertSame([['bob@example.com', '']], $second->to);
     }
 }

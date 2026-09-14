@@ -27,14 +27,15 @@ return [
         'username'         => 'user',
         'password'         => 'secret',
         'smtpSecure'       => 'tls',
-        'charset'          => 'UTF-8',
-        'encoding'         => 'base64',
+        'smtpKeepAlive'    => true,
         'timeout'          => 30,
-        'from'             => 'sender@example.com',
-        'fromName'         => 'Example Sender',
     ],
 ];
 ```
+
+This key holds transport settings only. Everything a message carries —
+recipients, sender, subject, body, charset, encoding, headers, attachments — is
+set on `Webware\Mailer\Message` and handed to `send()`.
 
 | Key | Type | Description |
 |---|---|---|
@@ -46,23 +47,20 @@ return [
 | `username` | `string` | SMTP username |
 | `password` | `string` | SMTP password |
 | `smtpSecure` | `''`, `'tls'` or `'ssl'` | SMTP encryption |
-| `charset` | non-empty `string` | Message character set |
-| `encoding` | non-empty `string` | Content transfer encoding |
+| `smtpKeepAlive` | `bool` | Keep the SMTP connection open between sends. Defaults to `false`, matching PHPMailer; enable it when one process sends a batch |
 | `timeout` | `positive-int` | SMTP connection timeout in seconds |
-| `from` | non-empty `string` | Sender address |
-| `fromName` | non-empty `string` | Sender display name |
 
 Every key is optional. `ConfigProvider` publishes `enableExceptions` and `useSmtp`;
 the remaining keys are the host application's to supply. `PhpMailer::fromConfig()`
 resolves each key against its own defaults, which mirror PHPMailer's own
-(`localhost`, port 25, timeout 300, `iso-8859-1`, `8bit`), so omitting a key leaves
-the transport behaving exactly as PHPMailer would on its own. The shape is declared
-per implementation as a `@type` alias on the adapter (`PhpMailerConfig` on
+(`localhost`, port 25, timeout 300), so omitting a key leaves the transport
+behaving exactly as PHPMailer would on its own. The shape is declared per
+implementation as a `@type` alias on the adapter (`PhpMailerConfig` on
 `PhpMailer`) and imported by `ConfigProvider`.
 
 Once the adapter is built, read the values from it as typed properties
-(`$adapter->host`, `$adapter->from`, `$adapter->fromName`, ...) rather than from
-the raw array — the adapter reports the configuration in force, defaults included.
+(`$adapter->host`, `$adapter->smtpKeepAlive`, ...) rather than from the raw array
+— the adapter reports the configuration in force, defaults included.
 
 If the `AdapterInterface` configuration entry is missing, not an array, or empty,
 creating the adapter throws `Laminas\ServiceManager\Exception\ServiceNotCreatedException`.

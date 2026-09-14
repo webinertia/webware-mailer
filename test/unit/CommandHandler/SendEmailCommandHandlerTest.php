@@ -19,11 +19,11 @@ use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\Command\SendEmailCommand;
 use Webware\Mailer\CommandHandler\SendEmailCommandHandler;
 use Webware\Mailer\Event\MessageEvent;
 use Webware\Mailer\MailerInterface;
+use Webware\Mailer\Message;
 use Webware\MessageBus\Command\CommandResultInterface;
 use Webware\MessageBus\MessageStatus;
 
@@ -35,64 +35,44 @@ final class SendEmailCommandHandlerTest extends TestCase
      * @throws \PHPUnit\Exception
      */
     #[Test]
-    public function handleReturnsFailureResultWhenNoAdapterConfigured(): void
-    {
-        $command = $this->makeCommand();
-
-        $mailer = $this->createStub(MailerInterface::class);
-        $mailer->method('getAdapter')->willReturn(null);
-
-        $handler = new SendEmailCommandHandler($mailer);
-        $result  = $handler->handle($command);
-
-        $this->assertSame(MessageStatus::Failure, $result->getStatus());
-        $this->assertSame('No adapter configured on Mailer instance.', $result->getResult());
-    }
-
-    /**
-     * @throws \PHPUnit\Exception
-     */
-    #[Test]
     public function handleReturnsFailureResultWhenSendThrows(): void
     {
         $command = $this->makeCommand();
-        $adapter = $this->createStub(AdapterInterface::class);
-        $adapter->method('withTo')->willReturnSelf();
-        $adapter->method('withFrom')->willReturnSelf();
-        $adapter->method('withSubject')->willReturnSelf();
-        $adapter->method('withBody')->willReturnSelf();
 
         $mailer = $this->createStub(MailerInterface::class);
-        $mailer->method('getAdapter')->willReturn($adapter);
         $mailer->method('send')->willThrowException(new RuntimeException('boom'));
 
-        $handler = new SendEmailCommandHandler($mailer);
-        $result  = $handler->handle($command);
+        $result = new SendEmailCommandHandler($mailer)->handle($command);
 
         $this->assertSame(MessageStatus::Failure, $result->getStatus());
         $this->assertSame('boom', $result->getResult());
     }
 
     /**
+     * The handler builds the message from the command and hands it to the mailer;
+     * the adapter it may be holding is the mailer's business, not the handler's.
+     *
      * @throws \PHPUnit\Exception
      */
     #[Test]
     public function handleReturnsSuccessResultWhenMailSent(): void
     {
         $command = $this->makeCommand();
-        $adapter = $this->createMock(AdapterInterface::class);
-        $adapter->expects($this->once())->method('withTo')->with('to@example.com')->willReturnSelf();
-        $adapter->expects($this->once())->method('withFrom')->with('from@example.com')->willReturnSelf();
-        $adapter->expects($this->once())->method('withSubject')->with('Subject')->willReturnSelf();
-        $adapter->expects($this->once())->method('withBody')->with('Body')->willReturnSelf();
 
         $mailer = $this->createMock(MailerInterface::class);
-        $mailer->expects($this->once())->method('getAdapter')->willReturn($adapter);
-        $mailer->expects($this->once())->method('setAdapter')->with($adapter);
-        $mailer->expects($this->once())->method('send')->willReturn(true);
+        $mailer->expects($this->once())
+            ->method('send')
+            ->with($this->callback(
+                static fn(Message $message): bool => (
+                    [['to@example.com', '']] === $message->to
+                    && 'from@example.com' === $message->from
+                    && 'Subject' === $message->subject
+                    && 'Body' === $message->body
+                ),
+            ))
+            ->willReturn(true);
 
-        $handler = new SendEmailCommandHandler($mailer);
-        $result  = $handler->handle($command);
+        $result = new SendEmailCommandHandler($mailer)->handle($command);
 
         $this->assertInstanceOf(CommandResultInterface::class, $result);
         $this->assertSame($command, $result->getCommand());

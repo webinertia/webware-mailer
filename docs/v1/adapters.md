@@ -1,29 +1,50 @@
 # Adapters
 
 Adapters translate `Webware\Mailer\Adapter\AdapterInterface` calls to a
-concrete mailer library. The package ships with a
-[PHPMailer](https://github.com/PHPMailer/PHPMailer) adapter.
+concrete mailer library. The package ships adapters for
+[PHPMailer](https://github.com/PHPMailer/PHPMailer) and
+[Symfony Mailer](https://symfony.com/doc/current/mailer.html). Neither library is
+a hard requirement, so install whichever one you use.
+
+## Wiring an adapter
+
+`AdapterInterface` is the seam the rest of the package resolves — `Mailer` takes
+nothing else — so mapping it to an implementation is the only wiring required.
+Both adapters are registered as services by `ConfigProvider`; point the interface
+at the one you want:
+
+```php
+use Webware\Mailer\Adapter\AdapterInterface;
+use Webware\Mailer\Adapter\SymfonyMailer; // or PhpMailer
+
+return [
+    'dependencies' => [
+        'aliases' => [
+            AdapterInterface::class => SymfonyMailer::class,
+        ],
+    ],
+];
+```
+
+The mapping is resolved at runtime, so it can differ per environment, and it can
+name any implementation of `AdapterInterface` — including one that lives outside
+this package.
+
+Adapter options are read from the `AdapterInterface` configuration section, and
+the keys are that implementation's own; see [Configuration](configuration.md).
 
 ## Interfaces
 
-`AdapterInterface` extends `MessageInterface`. It adds the transport controls and
-contracts the settings the implementation was configured with as read-only
-properties, so consumers read typed values instead of the raw configuration array:
+`AdapterInterface` is the transport contract: it carries the settings the
+implementation was configured with as read-only properties, and it sends one
+message. Consumers read typed values instead of the raw configuration array:
 
 ```php
 namespace Webware\Mailer\Adapter;
 
-interface AdapterInterface extends MessageInterface
+interface AdapterInterface
 {
     public bool $enableExceptions { get; }
-
-    public string $charset { get; }
-
-    public string $encoding { get; }
-
-    public string $from { get; }
-
-    public string $fromName { get; }
 
     public string $host { get; }
 
@@ -43,17 +64,21 @@ interface AdapterInterface extends MessageInterface
 
     public function isSmtp(): bool;
 
-    public function send(): bool;
+    public function send(MessageInterface $message): bool;
 }
 ```
 
 These are the minimum an implementation needs. An implementation may publish
 additional optional properties of its own.
 
+Message content is not part of this contract. An adapter is built once from its
+transport configuration and holds that transport for its lifetime; the message
+arrives at send time. Transport settings survive from one send to the next, the
+message does not.
+
 `MessageInterface` defines the message-building API. Every method returns a **new
-instance** whose transport is built from the state that instance carries, so a
-partially configured message can be shared without one caller's changes reaching
-another:
+instance**, so a partially configured message can be shared without one caller's
+changes reaching another:
 
 | Method | Description |
 |---|---|
@@ -73,16 +98,18 @@ another:
 | `withTo(string $email, string $name = ''): static` | Add a recipient |
 
 There is no reset method: because every call returns a fresh instance, a cleared
-message is simply a new adapter. Each call builds on the state of the instance it
+message is simply a new `Message`. Each call builds on the state of the instance it
 was called on, so chaining `with*()` calls accumulates recipients, headers and
-attachments; nothing carries over between separate adapter instances.
+attachments; nothing carries over between separate message instances. The adapter
+clears its transport's message state before applying each message, so two sends
+through the same adapter do not share it either.
 
 ## PHPMailer Adapter
 
 `Webware\Mailer\Adapter\PhpMailer` wraps
 `PHPMailer\PHPMailer\PHPMailer`. Method mapping:
 
-| Adapter method | PHPMailer call |
+| Message method | PHPMailer call |
 |---|---|
 | `withAltBody()` | `AltBody` property |
 | `withAttachment()` | `addAttachment(..., encoding: 'base64', ...)` |

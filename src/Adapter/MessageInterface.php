@@ -15,9 +15,11 @@ declare(strict_types=1);
 namespace Webware\Mailer\Adapter;
 
 /**
- * Message-building surface. Every method returns a new instance that carries the
- * state of the instance it was called on, so a partially configured message can be
- * shared without one caller's changes reaching another.
+ * Message-building surface: content only, no transport. Every method returns a
+ * new instance that carries the state of the instance it was called on, so a
+ * partially configured message can be shared without one caller's changes
+ * reaching another. {@see \Webware\Mailer\Message} is this package's
+ * implementation.
  *
  * @api
  */
@@ -36,6 +38,18 @@ interface MessageInterface
 
     /** @var list<array{0: string, 1: string}> email, name */
     public array $cc { get; }
+
+    /** Character set; empty leaves the choice to the adapter's library. */
+    public string $charset { get; }
+
+    /** Content transfer encoding; empty leaves the choice to the adapter's library. */
+    public string $encoding { get; }
+
+    /** Sender address. */
+    public string $from { get; }
+
+    /** Sender display name. */
+    public string $fromName { get; }
 
     /** @var list<array{0: string, 1: string}> header, value */
     public array $headers { get; }

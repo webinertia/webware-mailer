@@ -15,9 +15,9 @@ declare(strict_types=1);
 namespace Webware\Mailer\CommandHandler;
 
 use Exception;
-use RuntimeException;
 use Webware\Mailer\Command\SendEmailCommand;
 use Webware\Mailer\MailerInterface;
+use Webware\Mailer\Message;
 use Webware\MessageBus\Command\CommandInterface;
 use Webware\MessageBus\Command\CommandResult;
 use Webware\MessageBus\Command\CommandResultInterface;
@@ -36,18 +36,12 @@ final readonly class SendEmailCommandHandler implements CommandHandlerInterface
     public function handle(CommandInterface $command): CommandResultInterface
     {
         try {
-            $adapter = $this->mailer->getAdapter();
-            if (null === $adapter) {
-                throw new RuntimeException('No adapter configured on Mailer instance.');
-            }
-
-            $this->mailer->setAdapter(
-                $adapter->withTo($command->getTo())
+            $this->mailer->send(
+                new Message()->withTo($command->getTo())
                     ->withFrom($command->getFrom())
                     ->withSubject($command->getSubject())
                     ->withBody($command->getBody()),
             );
-            $this->mailer->send();
         } catch (Exception $e) { // track down the specific exception thrown by the mailer adapter and catch that instead of Exception
             return new CommandResult(
                 $command,

@@ -21,12 +21,14 @@ use PHPUnit\Framework\TestCase;
 use Webware\Mailer\Adapter\AdapterInterface;
 use Webware\Mailer\Adapter\MessageInterface;
 use Webware\Mailer\Adapter\PhpMailer;
+use Webware\Mailer\Adapter\SymfonyMailer;
 use Webware\Mailer\Command\SendEmailCommand;
 use Webware\Mailer\CommandHandler\Container\SendEmailCommandHandlerFactory;
 use Webware\Mailer\CommandHandler\SendEmailCommandHandler;
 use Webware\Mailer\ConfigProvider;
 use Webware\Mailer\Container\MailerFactory;
 use Webware\Mailer\Container\PhpMailerFactory;
+use Webware\Mailer\Container\SymfonyMailerFactory;
 use Webware\Mailer\Http\Middleware\Container\MailerMiddlewareFactory;
 use Webware\Mailer\Http\Middleware\MailerMiddleware;
 use Webware\Mailer\Mailer;
@@ -97,14 +99,14 @@ final class ConfigProviderTest extends TestCase
         $this->assertSame(
             [
                 'aliases'   => [
-                    AdapterInterface::class => PhpMailer::class,
-                    MailerInterface::class  => Mailer::class,
+                    MailerInterface::class => Mailer::class,
                 ],
                 'factories' => [
-                    PhpMailer::class               => PhpMailerFactory::class,
                     SendEmailCommandHandler::class => SendEmailCommandHandlerFactory::class,
                     Mailer::class                  => MailerFactory::class,
                     MailerMiddleware::class        => MailerMiddlewareFactory::class,
+                    PhpMailer::class               => PhpMailerFactory::class,
+                    SymfonyMailer::class           => SymfonyMailerFactory::class,
                 ],
             ],
             $provider->getDependencies(),
