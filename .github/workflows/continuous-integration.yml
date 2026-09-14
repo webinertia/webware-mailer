@@ -13,6 +13,9 @@ on:
       - "[0-9]+.[0-9]+.x"
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
+      # Prerelease tags need their own pattern: GitHub matches the whole ref, so
+      # a tag such as 1.0.0-beta.4 never matched the pattern above.
+      - "[0-9]+.[0-9]+.[0-9]+-*"
 
 jobs:
   qa:
