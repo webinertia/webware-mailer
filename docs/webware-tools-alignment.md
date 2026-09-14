@@ -1,5 +1,13 @@
 # Webware Tools Alignment — webware-mailer CI/CD
 
+> **Status: complete (2026-09-14).** The alignment described below is done and the
+> pipeline is green on PHP 8.4/8.5 across the latest/locked/lowest dependency
+> sets. Test suite: 81 tests / 310 assertions. Coverage: 100% lines (458/458) and
+> 100% methods (60/60). Mutation: 100% MSI / 100% covered MSI, gated at 95 in
+> `.github/workflows/continuous-integration.yml` and in `infection.json5.dist`.
+> The "Current state vs. target" table below is the pre-alignment snapshot,
+> retained as the record of what was absent before this work.
+
 ## Purpose
 
 Align `webware/webware-mailer` CI/CD pipeline and dev-tooling configuration with
