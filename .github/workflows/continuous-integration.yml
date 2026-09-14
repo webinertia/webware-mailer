@@ -30,7 +30,7 @@ jobs:
       enable-infection: true
       # Canonical leg for coverage + mutation testing (highest supported PHP).
       coverage-php-version: "8.5"
-      # Current MSI is 95%; start at webware-log's values and raise as the
-      # test suite matures.
+      # Gate held at 95 while the suite measures 100% MSI and 100% covered MSI,
+      # so a small regression still fails the build without flapping on noise.
       min-msi: "95"
       min-covered-msi: "95"
