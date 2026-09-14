@@ -122,9 +122,11 @@ final class SymfonyMailerTest extends TestCase
     #[Test]
     public function anSslTransportIsMarkedAsTls(): void
     {
+        // Port 587 is deliberately not 465, so TLS can only come from the
+        // smtpSecure setting rather than from Symfony inferring it from the port.
         $adapter = SymfonyMailer::fromConfig([
             'host'       => 'smtp.example.com',
-            'port'       => 465,
+            'port'       => 587,
             'smtpSecure' => 'ssl',
         ]);
 
