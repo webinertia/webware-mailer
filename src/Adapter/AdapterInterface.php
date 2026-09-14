@@ -26,8 +26,6 @@ namespace Webware\Mailer\Adapter;
  */
 interface AdapterInterface extends MessageInterface
 {
-    public bool $enableExceptions { get; }
-
     public string $charset { get; }
 
     public string $encoding { get; }
@@ -49,12 +47,6 @@ interface AdapterInterface extends MessageInterface
     public int $timeout { get; }
 
     public string $username { get; }
-
-    public bool $useSmtp { get; }
-
-    public function isMail(): self;
-
-    public function isSmtp(): self;
 
     public function send(): bool;
 }

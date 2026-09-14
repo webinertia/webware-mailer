@@ -177,19 +177,18 @@ Mirror webware-log's wrapper with mailer inputs:
 - `secrets: inherit`
 - `with`:
   - `php-versions: '["8.4", "8.5"]'`
-  - `run-integration: true` — integration suite will exercise a Mailpit
-    container (local `docker-compose` setup with Mailpit is built in a later
-    step). In CI, the reusable workflow's generic `db-image` step can host
-    Mailpit (image + port + health command TBD at the test-suite step); until
-    integration tests exist the `test-integration` leg runs an empty suite.
+  - `run-integration: true` — the integration suite makes a real SMTP send
+    against a fixture, not the network: `test/integration/TestAsset/fake-smtp-server.php`
+    is a minimal single-connection SMTP server started as a process on a free
+    port, and the test asserts on the message it captures. No `docker-compose`
+    service and no `db-image` step are needed.
   - `enable-codecov: true`
   - `enable-infection: true` — configured now; the test-suite step immediately
     follows this alignment work.
   - `coverage-php-version: "8.5"` (canonical leg, highest supported PHP)
   - `min-msi: "95"`, `min-covered-msi: "95"` (start at webware-log's values)
   - omit `db-image`, `db-env-json`, `db-port`, `db-health-cmd`,
-    `test-env-json` for now (defaults; Mailpit wiring lands with the
-    integration suite).
+    `test-env-json` — the integration suite needs no external service.
 
 ### 9. `.github/copilot-instructions.md` (new)
 
@@ -238,7 +237,7 @@ webware-log's. Verify only; no changes planned.
 | # | Decision | Resolution |
 |---|---|---|
 | D1 | Unit tests now vs later | **Later** — full test suite is the next step after this alignment work. Scaffold `test/unit/` + `test/integration/` only. |
-| D2 | `run-integration` | **`true`** — integration tests will use a Mailpit-backed `docker-compose` setup (built in the test-suite step); CI container wiring via the reusable workflow's `db-image` step, TBD then. |
+| D2 | `run-integration` | **`true`** — superseded: integration tests use a local fake SMTP server fixture (`test/integration/TestAsset/fake-smtp-server.php`), so no Mailpit container and no `db-image` wiring is required. |
 | D3 | `enable-infection` | **`true`** now; next step is the test suite. |
 | D4 | `min-msi` / `min-covered-msi` | **`95` / `95`** from the start. |
 | D5 | `8.6.0-dev` in `require.php` | **Do not adopt.** Leftover in webware-log; will be removed there in separate repo work (webware-log needs its own branch). `platform.php` still moves to `8.4.99`. |

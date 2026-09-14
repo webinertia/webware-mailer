@@ -52,17 +52,17 @@ return [
 | `from` | non-empty `string` | Sender address |
 | `fromName` | non-empty `string` | Sender display name |
 
-The keys are the adapter's constructor parameter names and every one of them is
-optional. `ConfigProvider` publishes `enableExceptions` and `useSmtp`; the
-remaining keys are the host application's to supply. A key the merged
-configuration does not provide is not applied at all, so the transport's own
-default stays in force rather than one mailer invented for the host. The section
-is published as an `AdapterConfig` shape (see the `@type` alias on
-`ConfigProvider`).
+Every key is optional. `ConfigProvider` publishes `enableExceptions` and `useSmtp`;
+the remaining keys are the host application's to supply. `PhpMailer::fromConfig()`
+resolves each key against its own defaults, which mirror PHPMailer's own
+(`localhost`, port 25, timeout 300, `iso-8859-1`, `8bit`), so omitting a key leaves
+the transport behaving exactly as PHPMailer would on its own. The shape is declared
+per implementation as a `@type` alias on the adapter (`PhpMailerConfig` on
+`PhpMailer`) and imported by `ConfigProvider`.
 
 Once the adapter is built, read the values from it as typed properties
 (`$adapter->host`, `$adapter->from`, `$adapter->fromName`, ...) rather than from
-the raw array — the adapter reports the transport's effective state.
+the raw array — the adapter reports the configuration in force, defaults included.
 
 If the `AdapterInterface` configuration entry is missing, not an array, or empty,
 creating the adapter throws `Laminas\ServiceManager\Exception\ServiceNotCreatedException`.
