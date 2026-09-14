@@ -111,7 +111,8 @@ final class PhpMailerFactoryTest extends TestCase
         $this->assertSame('tls', $result->smtpSecure);
         $this->assertSame(45, $result->timeout);
         $this->assertSame('user', $result->username);
-        $this->assertTrue($result->useSmtp);
+        $this->assertTrue($result->isSmtp());
+        $this->assertFalse($result->isMail());
         $this->assertSame('from@example.com', $this->baseMailer($result)->From);
         $this->assertSame('Example Sender', $this->baseMailer($result)->FromName);
     }
@@ -143,7 +144,8 @@ final class PhpMailerFactoryTest extends TestCase
         $this->assertSame('', $result->smtpSecure);
         $this->assertSame(300, $result->timeout);
         $this->assertSame('', $result->username);
-        $this->assertFalse($result->useSmtp);
+        $this->assertFalse($result->isSmtp());
+        $this->assertTrue($result->isMail());
         $this->assertSame('', $this->baseMailer($result)->From);
     }
 
@@ -231,7 +233,8 @@ final class PhpMailerFactoryTest extends TestCase
 
         $this->assertSame('mail', $this->baseMailer($result)->Mailer);
         $this->assertSame('smtp.example.com', $this->baseMailer($result)->Host);
-        $this->assertFalse($result->useSmtp);
+        $this->assertFalse($result->isSmtp());
+        $this->assertTrue($result->isMail());
     }
 
     /**

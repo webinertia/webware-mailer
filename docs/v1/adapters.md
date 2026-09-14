@@ -39,11 +39,9 @@ interface AdapterInterface extends MessageInterface
 
     public string $username { get; }
 
-    public bool $useSmtp { get; }
+    public function isMail(): bool;
 
-    public function isMail(): self;
-
-    public function isSmtp(): self;
+    public function isSmtp(): bool;
 
     public function send(): bool;
 }
@@ -53,8 +51,9 @@ These are the minimum an implementation needs. An implementation may publish
 additional optional properties of its own.
 
 `MessageInterface` defines the message-building API. Every method returns a **new
-instance** over a cloned transport, so a partially configured message can be shared
-without one caller's changes reaching another:
+instance** whose transport is built from the state that instance carries, so a
+partially configured message can be shared without one caller's changes reaching
+another:
 
 | Method | Description |
 |---|---|
@@ -74,8 +73,9 @@ without one caller's changes reaching another:
 | `withTo(string $email, string $name = ''): static` | Add a recipient |
 
 There is no reset method: because every call returns a fresh instance, a cleared
-message is simply a new adapter, and recipients, headers and attachments can never
-carry over from one send to the next.
+message is simply a new adapter. Each call builds on the state of the instance it
+was called on, so chaining `with*()` calls accumulates recipients, headers and
+attachments; nothing carries over between separate adapter instances.
 
 ## PHPMailer Adapter
 
@@ -102,9 +102,15 @@ carry over from one send to the next.
 | `isSmtp()` | `isSMTP()` |
 | `send()` | `send()` |
 
-Each `with*()` clones the wrapped `PHPMailer` instance before applying the change;
-the adapter the caller already holds is untouched. The configuration properties are
-set once by `Webware\Mailer\Container\PhpMailerFactory` and are `private(set)`.
+Each `with*()` returns a new adapter that builds its own `PHPMailer` transport from
+the state it carries before applying the change; the adapter the caller already
+holds is untouched. Nothing is cloned or mutated in place, so a transport never
+accumulates state across instances.
+
+The constructor is private. Build an adapter either through
+`Webware\Mailer\Container\PhpMailerFactory` (the container path) or
+`PhpMailer::fromConfig()`, which maps this implementation's own configuration shape
+and holds its defaults in one place. The configuration properties are `private(set)`.
 
 Methods that delegate to PHPMailer functions may throw
 `PHPMailer\PHPMailer\Exception` when `enableExceptions` is enabled.

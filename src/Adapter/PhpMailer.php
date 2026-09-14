@@ -22,45 +22,161 @@ use SensitiveParameter;
 /**
  * PHPMailer adapter.
  *
- * The settings passed to the constructor are exposed as read-only properties and
- * every message-building method returns a new instance over a cloned transport,
- * so a configured adapter can be shared and reused without one send leaking into
- * the next.
+ * The transport is built by the constructor from this instance's own state and is
+ * never cloned or replaced, so it cannot be swapped at runtime. Every method
+ * returns a new instance carrying that state forward.
+ *
+ * `enableExceptions`, `useSmtp`, `isMail()` and `isSmtp()` are PHPMailer-specific
+ * and deliberately live here rather than on the shared contract.
+ *
+ * Configuration shape for this implementation. Every key is optional; the defaults
+ * applied by `fromConfig()` are this adapter's own.
+ *
+ * @type PhpMailerConfig = array{
+ *   enableExceptions?: bool,
+ *   useSmtp?: bool,
+ *   host?: non-empty-string,
+ *   port?: int<1, 65535>,
+ *   smtpAuth?: bool,
+ *   username?: string,
+ *   password?: string,
+ *   smtpSecure?: ''|'tls'|'ssl',
+ *   charset?: non-empty-string,
+ *   encoding?: non-empty-string,
+ *   timeout?: positive-int,
+ *   from?: non-empty-string,
+ *   fromName?: non-empty-string,
+ * }
  */
 final class PhpMailer implements AdapterInterface
 {
-    public function __construct(
-        private BaseMailer $mailer,
-        public private(set) bool $enableExceptions = true,
-        public private(set) string $charset = 'iso-8859-1',
-        public private(set) string $encoding = '8bit',
-        public private(set) string $from = '',
-        public private(set) string $fromName = '',
-        public private(set) string $host = 'localhost',
+    private BaseMailer $mailer;
+
+    /**
+     * @param list<array{0: string, 1: string, 2: string, 3: bool}> $attachments
+     * @param list<array{0: string, 1: string}>                    $bcc
+     * @param list<array{0: string, 1: string}>                    $cc
+     * @param list<array{0: string, 1: string}>                    $headers
+     * @param list<array{0: string, 1: string}>                    $replyTo
+     * @param list<array{0: string, 1: string}>                    $to
+     * @throws MailerException
+     */
+    private function __construct(
+        public private(set) bool $enableExceptions,
+        public private(set) string $charset,
+        public private(set) string $encoding,
+        public private(set) string $from,
+        public private(set) string $fromName,
+        public private(set) string $host,
         #[SensitiveParameter]
-        public private(set) string $password = '',
-        public private(set) int $port = 25,
-        public private(set) bool $smtpAuth = false,
-        public private(set) string $smtpSecure = '',
-        public private(set) int $timeout = 300,
-        public private(set) string $username = '',
-        public private(set) bool $useSmtp = false,
-    ) {}
+        public private(set) string $password,
+        public private(set) int $port,
+        public private(set) bool $smtpAuth,
+        public private(set) string $smtpSecure,
+        public private(set) int $timeout,
+        public private(set) string $username,
+        public private(set) bool $useSmtp,
+        public private(set) string $altBody = '',
+        public private(set) array $attachments = [],
+        public private(set) array $bcc = [],
+        public private(set) string $body = '',
+        public private(set) array $cc = [],
+        public private(set) array $headers = [],
+        public private(set) bool $html = false,
+        public private(set) array $replyTo = [],
+        public private(set) string $subject = '',
+        public private(set) array $to = [],
+    ) {
+        $this->mailer = new BaseMailer($enableExceptions);
 
-    #[Override]
-    public function isMail(): self
-    {
-        $this->mailer->isMail();
+        if ($this->useSmtp) {
+            $this->mailer->isSMTP();
+        }
 
-        return $this;
+        $this->mailer->Host       = $this->host;
+        $this->mailer->Port       = $this->port;
+        $this->mailer->SMTPAuth   = $this->smtpAuth;
+        $this->mailer->Username   = $this->username;
+        $this->mailer->Password   = $this->password;
+        $this->mailer->SMTPSecure = $this->smtpSecure;
+        $this->mailer->CharSet    = $this->charset;
+        $this->mailer->Encoding   = $this->encoding;
+        $this->mailer->Timeout    = $this->timeout;
+
+        if ('' !== $this->from) {
+            $this->mailer->setFrom($this->from, $this->fromName);
+        }
+
+        foreach ($this->to as [$email, $name]) {
+            $this->mailer->addAddress($email, $name);
+        }
+
+        foreach ($this->cc as [$email, $name]) {
+            $this->mailer->addCC($email, $name);
+        }
+
+        foreach ($this->bcc as [$email, $name]) {
+            $this->mailer->addBCC($email, $name);
+        }
+
+        foreach ($this->replyTo as [$email, $name]) {
+            $this->mailer->addReplyTo($email, $name);
+        }
+
+        foreach ($this->headers as [$name, $value]) {
+            $this->mailer->addCustomHeader($name, $value);
+        }
+
+        foreach ($this->attachments as [$content, $name, $mimeType, $isRawContent]) {
+            if ($isRawContent) {
+                $this->mailer->addStringAttachment($content, $name, encoding: 'base64', type: $mimeType);
+
+                continue;
+            }
+
+            $this->mailer->addAttachment($content, $name, encoding: 'base64', type: $mimeType);
+        }
+
+        $this->mailer->Subject = $this->subject;
+        $this->mailer->Body    = $this->body;
+        $this->mailer->AltBody = $this->altBody;
+
+        $this->mailer->isHTML($this->html);
     }
 
-    #[Override]
-    public function isSmtp(): self
+    /**
+     * Builds an adapter from this implementation's own configuration shape.
+     *
+     * @param PhpMailerConfig $config
+     * @throws MailerException
+     */
+    public static function fromConfig(array $config = []): self
     {
-        $this->mailer->isSMTP();
+        return new self(
+            enableExceptions: $config['enableExceptions'] ?? true,
+            useSmtp         : $config['useSmtp'] ?? false,
+            host            : $config['host'] ?? 'localhost',
+            port            : $config['port'] ?? 25,
+            smtpAuth        : $config['smtpAuth'] ?? false,
+            username        : $config['username'] ?? '',
+            password        : $config['password'] ?? '',
+            smtpSecure      : $config['smtpSecure'] ?? '',
+            charset         : $config['charset'] ?? 'iso-8859-1',
+            encoding        : $config['encoding'] ?? '8bit',
+            timeout         : $config['timeout'] ?? 300,
+            from            : $config['from'] ?? '',
+            fromName        : $config['fromName'] ?? '',
+        );
+    }
 
-        return $this;
+    public function isMail(): bool
+    {
+        return 'mail' === $this->mailer->Mailer;
+    }
+
+    public function isSmtp(): bool
+    {
+        return 'smtp' === $this->mailer->Mailer;
     }
 
     /**
@@ -72,13 +188,37 @@ final class PhpMailer implements AdapterInterface
         return $this->mailer->send();
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function withAltBody(string $altBody): static
     {
-        $clone                  = $this->replicate();
-        $clone->mailer->AltBody = $altBody;
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $altBody,
+            attachments     : $this->attachments,
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
     /**
@@ -87,10 +227,31 @@ final class PhpMailer implements AdapterInterface
     #[Override]
     public function withAttachment(string $path, string $name = '', string $mimeType = ''): static
     {
-        $clone = $this->replicate();
-        $clone->mailer->addAttachment($path, $name, encoding: 'base64', type: $mimeType);
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : [...$this->attachments, [$path, $name, $mimeType, false]],
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
     /**
@@ -99,10 +260,31 @@ final class PhpMailer implements AdapterInterface
     #[Override]
     public function withAttachmentFromString(string $content, string $name, string $mimeType = ''): static
     {
-        $clone = $this->replicate();
-        $clone->mailer->addStringAttachment($content, $name, encoding: 'base64', type: $mimeType);
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : [...$this->attachments, [$content, $name, $mimeType, true]],
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
     /**
@@ -111,19 +293,64 @@ final class PhpMailer implements AdapterInterface
     #[Override]
     public function withBcc(string $email, string $name = ''): static
     {
-        $clone = $this->replicate();
-        $clone->mailer->addBCC($email, $name);
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : $this->attachments,
+            bcc             : [...$this->bcc, [$email, $name]],
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function withBody(string $body): static
     {
-        $clone               = $this->replicate();
-        $clone->mailer->Body = $body;
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : $this->attachments,
+            bcc             : $this->bcc,
+            body            : $body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
     /**
@@ -132,28 +359,97 @@ final class PhpMailer implements AdapterInterface
     #[Override]
     public function withCc(string $email, string $name = ''): static
     {
-        $clone = $this->replicate();
-        $clone->mailer->addCC($email, $name);
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : $this->attachments,
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : [...$this->cc, [$email, $name]],
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function withCharset(string $charset): static
     {
-        $clone                  = $this->replicate();
-        $clone->mailer->CharSet = $charset;
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : $this->attachments,
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function withEncoding(string $encoding): static
     {
-        $clone                   = $this->replicate();
-        $clone->mailer->Encoding = $encoding;
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : $this->attachments,
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
     /**
@@ -162,10 +458,31 @@ final class PhpMailer implements AdapterInterface
     #[Override]
     public function withFrom(string $email, string $name = ''): static
     {
-        $clone = $this->replicate();
-        $clone->mailer->setFrom($email, $name);
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $email,
+            fromName        : $name,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : $this->attachments,
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
     /**
@@ -174,19 +491,64 @@ final class PhpMailer implements AdapterInterface
     #[Override]
     public function withHeader(string $name, string $value): static
     {
-        $clone = $this->replicate();
-        $clone->mailer->addCustomHeader($name, $value);
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : $this->attachments,
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : [...$this->headers, [$name, $value]],
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function withHtml(bool $flag = true): static
     {
-        $clone = $this->replicate();
-        $clone->mailer->isHTML($flag);
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : $this->attachments,
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $flag,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
     /**
@@ -195,19 +557,64 @@ final class PhpMailer implements AdapterInterface
     #[Override]
     public function withReplyTo(string $email, string $name = ''): static
     {
-        $clone = $this->replicate();
-        $clone->mailer->addReplyTo($email, $name);
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : $this->attachments,
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : [...$this->replyTo, [$email, $name]],
+            subject         : $this->subject,
+            to              : $this->to,
+        );
     }
 
+    /**
+     * @throws MailerException
+     */
     #[Override]
     public function withSubject(string $subject): static
     {
-        $clone                  = $this->replicate();
-        $clone->mailer->Subject = $subject;
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : $this->attachments,
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $subject,
+            to              : $this->to,
+        );
     }
 
     /**
@@ -216,21 +623,30 @@ final class PhpMailer implements AdapterInterface
     #[Override]
     public function withTo(string $email, string $name = ''): static
     {
-        $clone = $this->replicate();
-        $clone->mailer->addAddress($email, $name);
-
-        return $clone;
-    }
-
-    /**
-     * Clone the adapter over a cloned transport, so a change made through a
-     * `with*()` method cannot reach the instance the caller already holds.
-     */
-    private function replicate(): static
-    {
-        $clone         = clone $this;
-        $clone->mailer = clone $this->mailer;
-
-        return $clone;
+        return new static(
+            enableExceptions: $this->enableExceptions,
+            charset         : $this->charset,
+            encoding        : $this->encoding,
+            from            : $this->from,
+            fromName        : $this->fromName,
+            host            : $this->host,
+            password        : $this->password,
+            port            : $this->port,
+            smtpAuth        : $this->smtpAuth,
+            smtpSecure      : $this->smtpSecure,
+            timeout         : $this->timeout,
+            username        : $this->username,
+            useSmtp         : $this->useSmtp,
+            altBody         : $this->altBody,
+            attachments     : $this->attachments,
+            bcc             : $this->bcc,
+            body            : $this->body,
+            cc              : $this->cc,
+            headers         : $this->headers,
+            html            : $this->html,
+            replyTo         : $this->replyTo,
+            subject         : $this->subject,
+            to              : [...$this->to, [$email, $name]],
+        );
     }
 }

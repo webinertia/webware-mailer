@@ -15,13 +15,42 @@ declare(strict_types=1);
 namespace Webware\Mailer\Adapter;
 
 /**
- * Message-building surface. Every method returns a new instance, so a partially
- * configured message can be shared without one caller's changes reaching another.
+ * Message-building surface. Every method returns a new instance that carries the
+ * state of the instance it was called on, so a partially configured message can be
+ * shared without one caller's changes reaching another.
  *
  * @api
  */
 interface MessageInterface
 {
+    /** Plain-text alternative body. */
+    public string $altBody { get; }
+
+    /** @var list<array{0: string, 1: string, 2: string, 3: bool}> content, name, mime type, is raw content */
+    public array $attachments { get; }
+
+    /** @var list<array{0: string, 1: string}> email, name */
+    public array $bcc { get; }
+
+    public string $body { get; }
+
+    /** @var list<array{0: string, 1: string}> email, name */
+    public array $cc { get; }
+
+    /** @var list<array{0: string, 1: string}> header, value */
+    public array $headers { get; }
+
+    /** Whether the body is sent as HTML. */
+    public bool $html { get; }
+
+    /** @var list<array{0: string, 1: string}> email, name */
+    public array $replyTo { get; }
+
+    public string $subject { get; }
+
+    /** @var list<array{0: string, 1: string}> email, name */
+    public array $to { get; }
+
     public function withAltBody(string $altBody): static;
 
     public function withAttachment(string $path, string $name = '', string $mimeType = ''): static;

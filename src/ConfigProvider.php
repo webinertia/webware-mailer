@@ -15,33 +15,16 @@ declare(strict_types=1);
 namespace Webware\Mailer;
 
 use Webware\Mailer\Adapter\AdapterInterface;
+use Webware\Mailer\Adapter\PhpMailer;
 use Webware\MessageBus\ConfigProvider as BusProvider;
 use Webware\MessageBus\MessageBusInterface;
 
 /**
- * Adapter configuration shape.
- *
- * Keys match the adapter's constructor parameter names.
- *
- * @type AdapterConfig = array{
- *   enableExceptions?: bool,
- *   useSmtp?: bool,
- *   host?: non-empty-string,
- *   port?: int<1, 65535>,
- *   smtpAuth?: bool,
- *   username?: string,
- *   password?: string,
- *   smtpSecure?: ''|'tls'|'ssl',
- *   charset?: non-empty-string,
- *   encoding?: non-empty-string,
- *   timeout?: positive-int,
- *   from?: non-empty-string,
- *   fromName?: non-empty-string,
- * }
+ * @import-type PhpMailerConfig from PhpMailer
  */
 final readonly class ConfigProvider
 {
-    /** @return AdapterConfig */
+    /** @return PhpMailerConfig */
     public function getAdapterConfig(): array
     {
         return [
