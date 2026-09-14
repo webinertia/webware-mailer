@@ -33,21 +33,17 @@ automatically. Then send a message:
 
 ```php
 use Webware\Mailer\Container\MailerFactory;
+use Webware\Mailer\Message;
 
 /** @var Psr\Container\ContainerInterface $container */
 $mailer = (new MailerFactory())($container);
 
-$adapter = $mailer->getAdapter();
+$message = new Message()->withTo('recipient@example.com')
+    ->withFrom('sender@example.com')
+    ->withSubject('Hello')
+    ->withBody('Message body');
 
-if (null !== $adapter) {
-    $adapter = $adapter->withTo('recipient@example.com')
-        ->withFrom('sender@example.com')
-        ->withSubject('Hello')
-        ->withBody('Message body');
-
-    $mailer->setAdapter($adapter);
-    $mailer->send();
-}
+$mailer->send($message);
 ```
 
 To send through SMTP instead of PHP's `mail()`, see the
