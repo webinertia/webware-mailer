@@ -32,9 +32,7 @@ final class SendEmailCommand implements NamedCommandInterface, EventAwareInterfa
         private string $subject,
         private string $body,
         private MessageEvent $event,
-    ) {
-        $this->name = self::class;
-    }
+    ) {}
 
     public function getBody(): string
     {
