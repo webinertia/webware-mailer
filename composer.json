@@ -36,7 +36,7 @@
         "symfony/mailer": "^8.1",
         "webware/message-bus": "2.0.x-dev",
         "webware/messagebus-event": "^2.0.0-beta.1",
-        "webware/webware-tools": "^0.1.x-dev"
+        "webware/webware-tools": "^1.0.0-beta.2"
     },
     "suggest": {
         "phpmailer/phpmailer": "Required to use the PHPMailer-backed adapter (Webware\\Mailer\\Adapter\\PhpMailer)",
