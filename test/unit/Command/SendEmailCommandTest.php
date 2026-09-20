@@ -19,9 +19,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Webware\Event\Event;
 use Webware\Mailer\Command\SendEmailCommand;
 use Webware\Mailer\Event\MessageEvent;
-use Webware\MessageBus\Event\Event;
 
 #[CoversClass(SendEmailCommand::class)]
 #[CoversMethod(SendEmailCommand::class, 'getBody')]

@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Webware\Mailer\Event;
 
-use Webware\MessageBus\Event\Event;
+use Webware\Event\Event;
 
 // TODO(@tyrsson): determine whether this event is still needed and flesh out accordingly
 final class MessageEvent extends Event

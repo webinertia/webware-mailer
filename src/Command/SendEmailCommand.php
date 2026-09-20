@@ -16,11 +16,11 @@ namespace Webware\Mailer\Command;
 
 use InvalidArgumentException;
 use Override;
+use Webware\Event\EventAwareInterface;
+use Webware\Event\EventInterface;
 use Webware\Mailer\Event\MessageEvent;
 use Webware\MessageBus\Command\NamedCommandInterface;
 use Webware\MessageBus\Command\NamedCommandTrait;
-use Webware\MessageBus\Event\EventAwareInterface;
-use Webware\MessageBus\Event\EventInterface;
 
 final class SendEmailCommand implements NamedCommandInterface, EventAwareInterface
 {
