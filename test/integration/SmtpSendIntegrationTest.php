@@ -167,7 +167,7 @@ final class SmtpSendIntegrationTest extends TestCase
             }
         };
 
-        return (new PhpMailerFactory())($container);
+        return new PhpMailerFactory()($container);
     }
 
     /**
