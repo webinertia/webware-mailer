@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3122bae109a22dd40ccbed45270da7a2",
+    "content-hash": "78634c2ef081ca482ccf601db7d3dfc0",
     "packages": [
         {
             "name": "phly/phly-event-dispatcher",
