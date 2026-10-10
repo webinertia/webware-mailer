@@ -45,7 +45,7 @@ final class MailerMiddlewareFactoryTest extends TestCase
             ->with(MailerInterface::class)
             ->willReturn($mailer);
 
-        $middleware = (new MailerMiddlewareFactory())($container);
+        $middleware = new MailerMiddlewareFactory()($container);
 
         $this->assertInstanceOf(MailerMiddleware::class, $middleware);
         $this->assertSame(
