@@ -23,7 +23,7 @@ use Webware\Mailer\MailerInterface;
 
 /**
  * Makes the configured mailer available to the request handler. The adapter's
- * settings, including its default sender, come from the adapter contract — the
+ * settings, including its default sender, come from the adapter contract - the
  * middleware carries no configuration of its own.
  */
 final readonly class MailerMiddleware implements MiddlewareInterface

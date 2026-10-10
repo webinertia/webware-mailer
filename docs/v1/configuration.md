@@ -11,7 +11,7 @@
 
 ## Adapter Options
 
-Adapter options live under the single `AdapterInterface` key — this is the only
+Adapter options live under the single `AdapterInterface` key - this is the only
 path the adapter factory reads:
 
 ```php
@@ -33,8 +33,8 @@ return [
 ];
 ```
 
-This key holds transport settings only. Everything a message carries —
-recipients, sender, subject, body, charset, encoding, headers, attachments — is
+This key holds transport settings only. Everything a message carries -
+recipients, sender, subject, body, charset, encoding, headers, attachments - is
 set on `Webware\Mailer\Message` and handed to `send()`.
 
 | Key | Type | Description |
@@ -60,7 +60,7 @@ implementation as a `@type` alias on the adapter (`PhpMailerConfig` on
 
 Once the adapter is built, read the values from it as typed properties
 (`$adapter->host`, `$adapter->smtpKeepAlive`, ...) rather than from the raw array
-— the adapter reports the configuration in force, defaults included.
+ - the adapter reports the configuration in force, defaults included.
 
 If the `AdapterInterface` configuration entry is missing, not an array, or empty,
 creating the adapter throws `Laminas\ServiceManager\Exception\ServiceNotCreatedException`.

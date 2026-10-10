@@ -35,7 +35,7 @@ use Symfony\Component\Mime\Part\TextPart;
  * Transport settings are supplied by the factory and are read-only here; this
  * adapter never sees a message until one is being sent. Symfony separates the
  * transport from the message, so the transport is built once and a fresh `Email`
- * is composed per send — nothing about a message is retained.
+ * is composed per send - nothing about a message is retained.
  *
  * `transport` selects the Symfony transport and is specific to this
  * implementation: `smtp` (default), `sendmail` or `null`, the last of which

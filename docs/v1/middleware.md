@@ -1,7 +1,7 @@
 # Middleware
 
 `Webware\Mailer\Http\Middleware\MailerMiddleware` attaches the `Mailer` to the
-request as an attribute. It carries no configuration of its own — the adapter's
+request as an attribute. It carries no configuration of its own - the adapter's
 settings, including its default sender, come from the adapter contract.
 
 ## Wiring
@@ -53,7 +53,7 @@ $adapter = $mailer->getAdapter();
 $host = $adapter->host;   // string, from the adapter config section
 ```
 
-Message content — sender included — lives on the message instead:
+Message content - sender included - lives on the message instead:
 
 ```php
 $from = (new Message())->withFrom('sender@example.com')->from;

@@ -23,8 +23,8 @@ use Webware\Mailer\Adapter\MessageInterface;
  *
  * Every method returns a new instance, so a partially built message can be shared
  * without one caller's changes reaching another. `charset` and `encoding` are
- * message properties — they describe how the content is written, not how it is
- * carried — and an empty value leaves the choice to the adapter's library.
+ * message properties - they describe how the content is written, not how it is
+ * carried - and an empty value leaves the choice to the adapter's library.
  *
  * @api
  */

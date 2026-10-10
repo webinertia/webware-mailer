@@ -1,4 +1,4 @@
-# Webware Tools Alignment — webware-mailer CI/CD
+# Webware Tools Alignment: webware-mailer CI/CD
 
 > **Status: complete (2026-09-14).** The alignment described below is done and the
 > pipeline is green on PHP 8.4/8.5 across the latest/locked/lowest dependency
@@ -20,7 +20,7 @@ webware-mailer adopts the same shape with mailer-specific inputs.
 and the minimum test scaffolding required for a green pipeline.
 
 **Explicitly out of scope (per user):**
-- PHPStan — `phpstan.neon.dist`, `stubs/`, `tomasvotruba/type-coverage`, any
+- PHPStan - `phpstan.neon.dist`, `stubs/`, `tomasvotruba/type-coverage`, any
   PHPStan composer dependency. Leftover in webware-log; not part of this
   alignment. (The reusable workflow runs no PHPStan job either.)
 - Local Docker dev tooling: `bin/install-deps.sh`, `compose.yml`, `docker/`
@@ -62,21 +62,21 @@ exposes `workflow_call`:
   `enable-infection` (bool), `coverage-php-version`, `min-msi`,
   `min-covered-msi`, `test-env-json`.
 - **Secrets:** `CODECOV_TOKEN` (optional), `INFECTION_DASHBOARD_API_KEY`
-  (optional) — both forwarded via `secrets: inherit`.
+  (optional) - both forwarded via `secrets: inherit`.
 - **Jobs:**
-  1. **mago** — matrix over `php-versions`; `composer install`;
+  1. **mago**: matrix over `php-versions`; `composer install`;
      pins `MAGO_PHP_VERSION` per matrix leg; runs `mago format --check`,
      `mago lint`, `mago analyze`, `mago guard` (each `success() || failure()`).
-  2. **test** — matrix `php-versions` × `[lowest, locked, latest]`;
+  2. **test**: matrix `php-versions` × `[lowest, locked, latest]`;
      composer install/update per strategy; optional DB container (omitted when
      `db-image` empty); exports `test-env-json` overrides; runs `composer test`
      (non-canonical legs) or `composer test-coverage` (canonical leg:
      `coverage-php-version` + `locked`, pcov); `composer test-integration` when
      `run-integration`; uploads `clover.xml` artifact.
-  3. **codecov** — needs `test`; `codecov/codecov-action@v5`,
+  3. **codecov**: needs `test`; `codecov/codecov-action@v5`,
      `slug: ${{ github.repository }}`, `files: clover.xml`,
      `fail_ci_if_error: false` (report-only).
-  4. **mutation-test** — needs `test`; PHP `coverage-php-version` with pcov +
+  4. **mutation-test**: needs `test`; PHP `coverage-php-version` with pcov +
      `tools: mago`; `composer mutation-test -- --min-msi=…
      --min-covered-msi=… --logger-github`; Infection itself invokes Mago via
      `staticAnalysisTool` in `infection.json5.dist`.
@@ -91,14 +91,14 @@ Implications for the consumer repo:
 - `mago.toml` must be present (format/lint/analyze/guard all run against it).
 - A DB container is **not** used for mailer (`db-image` omitted ⇒ both DB steps
   skipped at zero cost).
-- Pipeline is red until at least one test exists — PHPUnit 13 errors on zero
+- Pipeline is red until at least one test exists - PHPUnit 13 errors on zero
   executed tests, and Infection cannot score an empty suite.
 
 ## Work items
 
 ### 1. `composer.json`
 
-- `require.php`: keep `~8.4.1 || ~8.5.0`. Do **not** add `8.6.0-dev` — it is
+- `require.php`: keep `~8.4.1 || ~8.5.0`. Do **not** add `8.6.0-dev` - it is
   a leftover artifact in webware-log and will be removed there separately
   (webware-log needs its own branch for that cleanup; out of scope here).
 - `require-dev`:
@@ -170,7 +170,7 @@ Copy webware-log verbatim:
 
 ### 7. `phpbench.json.dist` (new)
 
-Copy webware-log (`runner.path: benchmarks`, `*Bench.php`). Config only — no
+Copy webware-log (`runner.path: benchmarks`, `*Bench.php`). Config only - no
 `benchmarks/` directory and no CI job; webware-log ships it the same way.
 
 ### 8. `.github/workflows/continuous-integration.yml` (new wrapper)
@@ -185,18 +185,18 @@ Mirror webware-log's wrapper with mailer inputs:
 - `secrets: inherit`
 - `with`:
   - `php-versions: '["8.4", "8.5"]'`
-  - `run-integration: true` — the integration suite makes a real SMTP send
+  - `run-integration: true` - the integration suite makes a real SMTP send
     against a fixture, not the network: `test/integration/TestAsset/fake-smtp-server.php`
     is a minimal single-connection SMTP server started as a process on a free
     port, and the test asserts on the message it captures. No `docker-compose`
     service and no `db-image` step are needed.
   - `enable-codecov: true`
-  - `enable-infection: true` — configured now; the test-suite step immediately
+  - `enable-infection: true` - configured now; the test-suite step immediately
     follows this alignment work.
   - `coverage-php-version: "8.5"` (canonical leg, highest supported PHP)
   - `min-msi: "95"`, `min-covered-msi: "95"` (start at webware-log's values)
   - omit `db-image`, `db-env-json`, `db-port`, `db-health-cmd`,
-    `test-env-json` — the integration suite needs no external service.
+    `test-env-json` - the integration suite needs no external service.
 
 ### 9. `.github/copilot-instructions.md` (new)
 
@@ -232,7 +232,7 @@ webware-log's. Verify only; no changes planned.
 - `INFECTION_DASHBOARD_API_KEY` secret in `webware/webware-mailer` repo
   settings (per-repo; feeds the Stryker dashboard + badge via
   `secrets: inherit`).
-- `CODECOV_TOKEN` — org-wide secret in `webinertia` org, already used by
+- `CODECOV_TOKEN` - org-wide secret in `webinertia` org, already used by
   webware-log; inherits through. Confirm Codecov App has access to
   `webware-mailer`.
 - Renovate: org-wide config `webinertia/.github` already referenced by
@@ -244,8 +244,8 @@ webware-log's. Verify only; no changes planned.
 
 | # | Decision | Resolution |
 |---|---|---|
-| D1 | Unit tests now vs later | **Later** — full test suite is the next step after this alignment work. Scaffold `test/unit/` + `test/integration/` only. |
-| D2 | `run-integration` | **`true`** — superseded: integration tests use a local fake SMTP server fixture (`test/integration/TestAsset/fake-smtp-server.php`), so no Mailpit container and no `db-image` wiring is required. |
+| D1 | Unit tests now vs later | **Later**: full test suite is the next step after this alignment work. Scaffold `test/unit/` + `test/integration/` only. |
+| D2 | `run-integration` | **`true`**: superseded: integration tests use a local fake SMTP server fixture (`test/integration/TestAsset/fake-smtp-server.php`), so no Mailpit container and no `db-image` wiring is required. |
 | D3 | `enable-infection` | **`true`** now; next step is the test suite. |
 | D4 | `min-msi` / `min-covered-msi` | **`95` / `95`** from the start. |
 | D5 | `8.6.0-dev` in `require.php` | **Do not adopt.** Leftover in webware-log; will be removed there in separate repo work (webware-log needs its own branch). `platform.php` still moves to `8.4.99`. |
@@ -254,7 +254,7 @@ webware-log's. Verify only; no changes planned.
 
 ## Execution order
 
-1. This plan reviewed + decisions D1–D7 confirmed. (Done.)
+1. This plan reviewed + decisions D1 - D7 confirmed. (Done.)
 2. `composer.json` updates; run `composer update`; commit `composer.lock`.
 3. Test scaffolding: create `test/unit/` + `test/integration/` (empty,
    `.gitkeep`-held); full suite in the following step.
@@ -262,13 +262,13 @@ webware-log's. Verify only; no changes planned.
    `codecov.yml`, `renovate.json`, `phpbench.json.dist`.
 5. Mago pass: `mago format` (isolated commit), then lint/analyze/guard fixes;
    baseline only approved remainders.
-6. `.github/workflows/continuous-integration.yml` wrapper (with D2–D4 inputs) +
+6. `.github/workflows/continuous-integration.yml` wrapper (with D2 - D4 inputs) +
    `.github/copilot-instructions.md`.
 7. Local verification before push:
    - `composer validate --strict`
    - `mago format --check`, `mago lint`, `mago analyze`, `mago guard` (green)
    - `composer test` / `test-integration` / `test-coverage` / `mutation-test`
-     expected **red** (empty suites) — accepted until the test-suite step.
+     expected **red** (empty suites) - accepted until the test-suite step.
 8. Push branch, open PR against `0.1.x`; verify `mago` and `codecov` jobs
    green; `test` + `mutation-test` go green when the test-suite step lands.
 9. User-side repo settings (INFECTION token, Codecov/Renovate app access,
@@ -278,4 +278,4 @@ webware-log's. Verify only; no changes planned.
 
 - PHPStan (`phpstan.neon.dist`, stubs, type-coverage extension, PHPStan deps).
 - `bin/install-deps.sh`, `compose.yml`, `docker/`.
-- Benchmarks (`benchmarks/*Bench.php`) — config only.
+- Benchmarks (`benchmarks/*Bench.php`) - config only.
