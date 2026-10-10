@@ -38,6 +38,8 @@ use Webware\MessageBus\MessageBusInterface;
 
 use function dirname;
 
+use const DIRECTORY_SEPARATOR;
+
 #[CoversClass(ConfigProvider::class)]
 #[CoversMethod(ConfigProvider::class, 'getAdapterConfig')]
 #[CoversMethod(ConfigProvider::class, 'getCommandMap')]
@@ -122,7 +124,7 @@ final class ConfigProviderTest extends TestCase
         $provider = new ConfigProvider();
 
         $this->assertSame(
-            ['paths' => ['mail' => [dirname(__DIR__, levels: 2) . '/src/../templates/']]],
+            ['paths' => ['mail' => [dirname(__DIR__, levels: 2) . DIRECTORY_SEPARATOR . 'src/../templates/']]],
             $provider->getTemplates(),
         );
     }
