@@ -8,8 +8,8 @@ a hard requirement, so install whichever one you use.
 
 ## Wiring an adapter
 
-`AdapterInterface` is the seam the rest of the package resolves — `Mailer` takes
-nothing else — so mapping it to an implementation is the only wiring required.
+`AdapterInterface` is the seam the rest of the package resolves - `Mailer` takes
+nothing else - so mapping it to an implementation is the only wiring required.
 Both adapters are registered as services by `ConfigProvider`; point the interface
 at the one you want:
 
@@ -27,7 +27,7 @@ return [
 ```
 
 The mapping is resolved at runtime, so it can differ per environment, and it can
-name any implementation of `AdapterInterface` — including one that lives outside
+name any implementation of `AdapterInterface` - including one that lives outside
 this package.
 
 Adapter options are read from the `AdapterInterface` configuration section, and

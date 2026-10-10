@@ -18,7 +18,7 @@ namespace Webware\Mailer;
  * The component's entry point.
  *
  * A mailer cannot work without an adapter, and the adapter is supplied once by
- * its factory through the constructor — it is not a mutable collaborator. The
+ * its factory through the constructor - it is not a mutable collaborator. The
  * message is passed per send, so no message state is held here and two sends
  * cannot bleed into one another.
  *

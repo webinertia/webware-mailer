@@ -18,7 +18,7 @@ interface MailerInterface
   supplied by the factory, so it is never absent.
 - `send()` builds nothing: it hands the message you give it to the adapter.
 - Nothing about a message is stored here, so two sends cannot bleed into one
-  another — see [Adapters](adapters.md).
+  another - see [Adapters](adapters.md).
 
 ## Usage
 
