@@ -37,7 +37,8 @@ final readonly class SendEmailCommandHandler implements CommandHandlerInterface
     {
         try {
             $this->mailer->send(
-                new Message()->withTo($command->getTo())
+                new Message()
+                    ->withTo($command->getTo())
                     ->withFrom($command->getFrom())
                     ->withSubject($command->getSubject())
                     ->withBody($command->getBody()),

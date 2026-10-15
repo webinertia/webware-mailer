@@ -40,7 +40,8 @@ final class MailerFactoryTest extends TestCase
     {
         $adapter   = $this->createStub(AdapterInterface::class);
         $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')
+        $container
+            ->method('get')
             ->willReturnCallback(
                 static fn(string $id): mixed => AdapterInterface::class === $id ? $adapter : null,
             );

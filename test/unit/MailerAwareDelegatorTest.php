@@ -48,7 +48,8 @@ final class MailerAwareDelegatorTest extends TestCase
         $service->expects($this->once())->method('setMailer')->with($mailer);
 
         $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')
+        $container
+            ->method('get')
             ->willReturnCallback(
                 static fn(string $id): mixed => MailerInterface::class === $id ? $mailer : null,
             );
@@ -90,7 +91,8 @@ final class MailerAwareDelegatorTest extends TestCase
         $mailer  = $this->createStub(MailerInterface::class);
 
         $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')
+        $container
+            ->method('get')
             ->willReturnCallback(
                 static fn(string $id): mixed => MailerInterface::class === $id ? $mailer : null,
             );

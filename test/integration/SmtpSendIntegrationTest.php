@@ -85,7 +85,8 @@ final class SmtpSendIntegrationTest extends TestCase
 
         $mailer = new Mailer($adapter);
 
-        $message = new Message()->withTo('to@example.com')
+        $message = new Message()
+            ->withTo('to@example.com')
             ->withFrom('from@example.com')
             ->withSubject('Integration Subject')
             ->withBody('Integration Body');
@@ -124,7 +125,8 @@ final class SmtpSendIntegrationTest extends TestCase
         $this->expectException(MailerException::class);
 
         $mailer->send(
-            new Message()->withTo('to@example.com')
+            new Message()
+                ->withTo('to@example.com')
                 ->withFrom('from@example.com')
                 ->withSubject('Integration Subject')
                 ->withBody('Integration Body'),

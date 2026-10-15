@@ -54,7 +54,8 @@ final class MessageTest extends TestCase
     {
         $base = new Message();
 
-        $message = $base->withTo('to@example.com', 'To')
+        $message = $base
+            ->withTo('to@example.com', 'To')
             ->withFrom('from@example.com', 'From')
             ->withSubject('Subject')
             ->withBody('Body')
@@ -110,7 +111,8 @@ final class MessageTest extends TestCase
     {
         $base = new Message();
 
-        $message = $base->withAttachmentFromString('first', 'first.txt', 'text/plain')
+        $message = $base
+            ->withAttachmentFromString('first', 'first.txt', 'text/plain')
             ->withAttachmentFromString('second', 'second.txt', 'text/plain')
             ->withAttachment('/tmp/third.txt', 'third.txt', 'text/plain');
 
@@ -151,7 +153,8 @@ final class MessageTest extends TestCase
     {
         $base = new Message();
 
-        $message = $base->withTo('first@example.com', 'First')
+        $message = $base
+            ->withTo('first@example.com', 'First')
             ->withTo('second@example.com', 'Second')
             ->withCc('cc@example.com', 'Cc')
             ->withCc('cc2@example.com', 'Cc Two')
