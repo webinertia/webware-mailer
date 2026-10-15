@@ -46,7 +46,8 @@ final class MailerMiddlewareTest extends TestCase
         $capturedValue        = null;
 
         $request = $this->createStub(ServerRequestInterface::class);
-        $request->method('withAttribute')
+        $request
+            ->method('withAttribute')
             ->willReturnCallback(
                 static function (string $attribute, mixed $value) use (
                     $requestWithAttribute,

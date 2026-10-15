@@ -305,7 +305,8 @@ final class PhpMailerFactoryTest extends TestCase
     private function makeContainer(array $config): ContainerInterface
     {
         $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')
+        $container
+            ->method('get')
             ->willReturnCallback(
                 static fn(string $id): mixed => 'config' === $id ? $config : null,
             );

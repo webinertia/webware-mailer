@@ -40,7 +40,8 @@ final class MailerMiddlewareFactoryTest extends TestCase
     {
         $mailer    = $this->createStub(MailerInterface::class);
         $container = $this->createMock(ContainerInterface::class);
-        $container->expects($this->once())
+        $container
+            ->expects($this->once())
             ->method('get')
             ->with(MailerInterface::class)
             ->willReturn($mailer);

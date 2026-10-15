@@ -60,7 +60,8 @@ final class SendEmailCommandHandlerTest extends TestCase
         $command = $this->makeCommand();
 
         $mailer = $this->createMock(MailerInterface::class);
-        $mailer->expects($this->once())
+        $mailer
+            ->expects($this->once())
             ->method('send')
             ->with($this->callback(
                 static fn(Message $message): bool => (
