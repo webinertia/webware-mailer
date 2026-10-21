@@ -126,7 +126,11 @@ Implications for the consumer repo:
 
 Modeled on webware-log, minus DB specifics:
 
-- schema 13.1 (`https://schema.phpunit.de/13.1/phpunit.xsd`),
+- schema pointer `vendor/phpunit/phpunit/phpunit.xsd`, a relative path on purpose:
+  Infection validates this file against it before running any mutant, so an
+  `https://schema.phpunit.de/...` URL makes the mutation job depend on that host
+  being reachable. Relative is also what `phpunit --generate-configuration`
+  writes itself. Alongside it:
   `bootstrap="vendor/autoload.php"`, `colors="true"`,
   `cacheDirectory=".phpunit.cache"`.
 - Strict flags: `requireCoverageMetadata="true"`, `failOnNotice="true"`,
