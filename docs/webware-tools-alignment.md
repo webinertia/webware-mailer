@@ -20,6 +20,7 @@ webware-mailer adopts the same shape with mailer-specific inputs.
 and the minimum test scaffolding required for a green pipeline.
 
 **Explicitly out of scope (per user):**
+
 - PHPStan - `phpstan.neon.dist`, `stubs/`, `tomasvotruba/type-coverage`, any
   PHPStan composer dependency. Leftover in webware-log; not part of this
   alignment. (The reusable workflow runs no PHPStan job either.)

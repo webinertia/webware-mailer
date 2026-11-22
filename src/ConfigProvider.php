@@ -56,11 +56,12 @@ final readonly class ConfigProvider
                 MailerInterface::class => Mailer::class,
             ],
             'factories' => [
-                CommandHandler\SendEmailCommandHandler::class => CommandHandler\Container\SendEmailCommandHandlerFactory::class,
-                Mailer::class                                 => Container\MailerFactory::class,
-                Http\Middleware\MailerMiddleware::class       => Http\Middleware\Container\MailerMiddlewareFactory::class,
-                Adapter\PhpMailer::class                      => Container\PhpMailerFactory::class,
-                Adapter\SymfonyMailer::class                  => Container\SymfonyMailerFactory::class,
+                CommandHandler\SendEmailCommandHandler::class =>
+                    CommandHandler\Container\SendEmailCommandHandlerFactory::class,
+                Mailer::class                           => Container\MailerFactory::class,
+                Http\Middleware\MailerMiddleware::class => Http\Middleware\Container\MailerMiddlewareFactory::class,
+                Adapter\PhpMailer::class                => Container\PhpMailerFactory::class,
+                Adapter\SymfonyMailer::class            => Container\SymfonyMailerFactory::class,
             ],
         ];
     }
