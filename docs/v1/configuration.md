@@ -60,7 +60,8 @@ implementation as a `@type` alias on the adapter (`PhpMailerConfig` on
 
 Once the adapter is built, read the values from it as typed properties
 (`$adapter->host`, `$adapter->smtpKeepAlive`, ...) rather than from the raw array
- - the adapter reports the configuration in force, defaults included.
+
+- the adapter reports the configuration in force, defaults included.
 
 If the `AdapterInterface` configuration entry is missing, not an array, or empty,
 creating the adapter throws `Laminas\ServiceManager\Exception\ServiceNotCreatedException`.
